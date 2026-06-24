@@ -1,0 +1,42 @@
+# Talk_To_Ex — custom Ollama model for live SMS persona replies.
+#
+# Why a Modelfile at all:
+#   Qwen sometimes ignores the runtime `system` message and answers as "Qwen"
+#   (Ollama issue #6873). Baking a ChatML system stub + explicit params into a
+#   derived model makes the persona/name/params stick. The conversation engine
+#   still passes the *real* per-persona system prompt at request time — this stub
+#   is only the floor.
+#
+# Build it on the model host (after `ollama pull qwen2.5:14b-instruct-q4_K_M`):
+#   cd ops/ollama
+#   ollama create talk-to-ex -f Modelfile
+#   ollama run talk-to-ex   # smoke-test that it answers in character, not as "Qwen"
+#
+# To use it, set OLLAMA_MODEL=talk-to-ex in backend/.env. Leaving the default
+# (qwen2.5:14b-instruct-q4_K_M) also works — the engine sets the same params per
+# request — but the custom model is the more reliable path for the name leak.
+
+FROM qwen2.5:14b-instruct-q4_K_M
+
+# ChatML template (Qwen2.5's native format). Keep it explicit so the system turn
+# is always honored.
+TEMPLATE """{{- if .System }}<|im_start|>system
+{{ .System }}<|im_end|>
+{{ end }}{{- range .Messages }}<|im_start|>{{ .Role }}
+{{ .Content }}<|im_end|>
+{{ end }}<|im_start|>assistant
+"""
+
+# System stub. The engine overrides this with the distilled persona at runtime;
+# this is the fallback identity + the two rules Qwen most often breaks.
+SYSTEM """You are role-playing as a specific real person in a text-message (SMS) conversation. Stay fully in character. Never reveal that you are an AI, a language model, or "Qwen". Reply the way that person texts: short, casual, lowercase, fragmentary, sometimes split across multiple bubbles. Always reply in the same language the other person just used (English or Chinese — never switch unprompted)."""
+
+# Context + sampling. num_ctx MUST be set explicitly — Ollama's default is only
+# 4K under 24 GiB VRAM, which truncates the stuffed persona + memories + history.
+# KV-cache size = num_ctx * OLLAMA_NUM_PARALLEL, so keep NUM_PARALLEL=1 (env).
+PARAMETER num_ctx 8192
+PARAMETER temperature 0.8
+
+# Stop tokens so the model doesn't run past its turn in ChatML.
+PARAMETER stop "<|im_start|>"
+PARAMETER stop "<|im_end|>"

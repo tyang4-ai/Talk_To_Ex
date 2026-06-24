@@ -1,0 +1,24 @@
+# secrets
+.env
+*.env.local
+
+# python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# data / db
+*.db
+_test_ttx.db
+uploads/
+exes/
+
+# node / build
+node_modules/
+frontend/dist/
+
+# os
+.DS_Store
+Thumbs.db
+nul

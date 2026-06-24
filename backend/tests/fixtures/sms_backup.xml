@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<smses count="3">
+<sms address="+15551234567" date="1615582000000" type="1" body="你好" />
+<sms address="+15551234567" date="1615582005000" type="2" body="hey there" />
+<sms address="+15551234567" date="1615582010000" type="1" body="我想你了" />
+</smses>

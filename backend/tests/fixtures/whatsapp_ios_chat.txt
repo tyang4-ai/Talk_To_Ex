@@ -1,0 +1,6 @@
+‎[12/03/2021, 21:04:33] Messages and calls are end-to-end encrypted.
+[12/03/2021, 21:05:00] Xiao Mei: 你好‎
+[12/03/2021, 21:05:10] Me: hey
+this wraps onto a second line
+[12/03/2021, 21:06:00] Xiao Mei: <Media omitted>
+[12/03/2021, 21:07:00] Xiao Mei: 我想你了

@@ -1,0 +1,33 @@
+# Cloudflare named-tunnel ingress for Talk_To_Ex.
+#
+# Copy to config.yml and fill in your tunnel id + credentials path. This maps the
+# public hostname to the LOCAL FastAPI app only. Ollama (:11434) is never listed
+# here and must never be exposed.
+#
+# Prereqs (one time, see windows-service.md for the service install):
+#   cloudflared tunnel login
+#   cloudflared tunnel create talk-to-ex      # prints the tunnel UUID + creds file
+#   cloudflared tunnel route dns talk-to-ex ex.yang9ru.online
+#
+# Run it for a quick test:  cloudflared tunnel --config config.yml run
+# Install it as a service:  see windows-service.md
+
+# The tunnel's UUID (from `cloudflared tunnel create`). Either the UUID or the
+# tunnel name works here.
+tunnel: <YOUR_TUNNEL_UUID>
+
+# Path to the tunnel credentials JSON written by `tunnel create`.
+# On Windows this is typically:
+#   C:\Users\<you>\.cloudflared\<YOUR_TUNNEL_UUID>.json
+credentials-file: C:\Users\<you>\.cloudflared\<YOUR_TUNNEL_UUID>.json
+
+# Public hostname -> local service. First match wins; the last rule MUST be a
+# catch-all `service:` with no hostname.
+ingress:
+  # Twilio's inbound SMS webhook + the React portal both land on the FastAPI app.
+  - hostname: ex.yang9ru.online
+    service: http://localhost:8080
+
+  # Catch-all 404 for any other host that resolves to this tunnel. Required —
+  # cloudflared refuses to start without a final rule that has no hostname.
+  - service: http_status:404

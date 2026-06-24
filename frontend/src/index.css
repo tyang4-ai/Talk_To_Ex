@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-neutralbg text-ink font-body antialiased;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Bold tight display type for headlines */
+  h1,
+  h2,
+  h3 {
+    @apply font-display;
+  }
+}
+
+@layer components {
+  /* Round pill CTA — the signature button shape */
+  .pill {
+    @apply inline-flex items-center justify-center gap-2 rounded-pill font-display font-bold
+      tracking-tight transition-transform duration-150 active:scale-[0.97]
+      focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/50;
+  }
+
+  .pill-primary {
+    @apply pill bg-white text-tinder-start shadow-pill px-8 py-4 text-lg;
+  }
+
+  .pill-ghost {
+    @apply pill border-2 border-white/70 text-white px-8 py-4 text-lg
+      hover:bg-white/10;
+  }
+
+  .pill-ink {
+    @apply pill bg-tinder-gradient-135 text-white shadow-pill px-8 py-4 text-lg;
+  }
+
+  /* Full-bleed gradient surface used on hero/wizard screens */
+  .gradient-screen {
+    @apply bg-tinder-gradient text-white;
+  }
+
+  /* Input used inside cards */
+  .field {
+    @apply w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-base
+      text-ink placeholder:text-muted/70 outline-none transition
+      focus:border-tinder-mid focus:ring-4 focus:ring-tinder-mid/15;
+  }
+
+  .field-label {
+    @apply mb-1.5 block text-sm font-semibold text-ink;
+  }
+}
+
+/* Respect reduced-motion preference (quality floor) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
