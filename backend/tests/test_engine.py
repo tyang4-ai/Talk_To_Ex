@@ -6,6 +6,8 @@ persona name + the explicit language-mirroring rule. Mixed zh/en throughout.
 """
 from __future__ import annotations
 
+import json
+
 import pytest
 from cryptography.fernet import Fernet
 from sqlalchemy.pool import StaticPool
@@ -120,6 +122,30 @@ def test_build_system_prompt_includes_frozen_layers(session, persona_id):
     assert "超过2小时会发" in prompt
     assert "被忽视" in prompt
     assert "Separate each bubble" in prompt
+
+
+def test_reply_uses_persona_routed_model(session, persona_id, monkeypatch):
+    """When no client is injected, reply() builds an OllamaClient on the model
+    the distill step pinned to the persona (meta_json['llm_model'])."""
+    persona = session.get(Persona, persona_id)
+    meta = json.loads(persona.meta_json)
+    meta["llm_model"] = "gemma3:12b"
+    persona.meta_json = json.dumps(meta, ensure_ascii=False)
+    session.add(persona)
+    session.commit()
+
+    captured = {}
+
+    class CapClient:
+        def __init__(self, *a, model=None, **k):
+            captured["model"] = model
+
+        def chat(self, messages, **k):
+            return "hi"
+
+    monkeypatch.setattr(engine, "OllamaClient", CapClient)
+    engine.reply(session, persona_id, "+15555550100", "hey")  # no ollama injected
+    assert captured["model"] == "gemma3:12b"
 
 
 def test_reply_uses_prior_history_and_overlay(session, persona_id):

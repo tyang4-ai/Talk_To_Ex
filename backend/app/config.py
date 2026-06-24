@@ -27,10 +27,17 @@ class Settings(BaseSettings):
 
     # Ollama (local model)
     ollama_base_url: str = "http://localhost:11434"
-    ollama_model: str = "qwen2.5:14b-instruct-q4_K_M"
+    ollama_model: str = "qwen2.5:14b-instruct-q4_K_M"  # fallback when a persona has no routed model
     ollama_embed_model: str = "bge-m3"
     ollama_num_parallel: int = 1
     style_retune_every: int = 100
+
+    # Hybrid model routing: the dominant language of the friend's uploaded log
+    # picks the local model — Chinese -> Qwen (best bilingual zh), English ->
+    # Gemma. Chosen once at distill time, stored on the persona, used per reply.
+    ollama_model_zh: str = "qwen2.5:14b-instruct-q4_K_M"
+    ollama_model_en: str = "gemma3:12b"
+    model_route_cjk_threshold: float = 0.5  # CJK char fraction >= this -> zh (Qwen)
 
     # Ops / safety
     cloudflare_tunnel_token: str = ""

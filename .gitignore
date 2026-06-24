@@ -1,6 +1,12 @@
 # secrets
 .env
 *.env.local
+# local operator secret notes — API tokens, recovery codes, etc. NEVER commit.
+website detailes.txt
+website details.txt
+*secret*.txt
+*recovery*.txt
+*credentials*.txt
 
 # python
 __pycache__/

@@ -13,6 +13,7 @@ from sqlmodel import Session, select
 from ..auth.deps import get_current_user
 from ..billing.number_service import provision
 from ..convo.engine import reply as engine_reply
+from ..convo.model_router import pick_model
 from ..db import Number, Persona, Upload, User, get_session
 from ..distill.pipeline import distill
 from ..ingestion.upload import load_normalized
@@ -49,11 +50,17 @@ class PersonaSummary(BaseModel):
     message_count: int
     has_artifacts: bool
     number: Optional[str] = None
+    llm_model: Optional[str] = None
+    llm_language: Optional[str] = None
 
 
 def _summary(session: Session, p: Persona) -> PersonaSummary:
     uploads = session.exec(select(Upload).where(Upload.persona_id == p.id)).all()
     num = session.exec(select(Number).where(Number.persona_id == p.id)).first()
+    try:
+        meta = json.loads(p.meta_json or "{}")
+    except Exception:
+        meta = {}
     return PersonaSummary(
         id=p.id,
         slug=p.slug,
@@ -63,6 +70,8 @@ def _summary(session: Session, p: Persona) -> PersonaSummary:
         message_count=sum(u.message_count for u in uploads),
         has_artifacts=bool(p.persona_md_enc),
         number=num.e164 if num else None,
+        llm_model=meta.get("llm_model"),
+        llm_language=meta.get("llm_language"),
     )
 
 
@@ -121,12 +130,21 @@ def distill_persona(
     intake = json.loads(persona.meta_json or "{}").get("intake", {})
     arts = distill(transcript, intake)  # real Claude call at runtime (needs key)
     arts.meta["intake"] = intake  # keep intake so re-distill stays possible
+
+    # Hybrid routing: pick the local model from the log's dominant language and
+    # pin it on the persona so the live engine answers on the best-fit model.
+    llm_language, llm_model = pick_model(transcript)
+    arts.meta["llm_language"] = llm_language
+    arts.meta["llm_model"] = llm_model
+
     store.save_artifacts(persona_id, arts, session)
     return {
         "ok": True,
         "name": persona.name,
         "message_count": len(transcript),
         "layers": list(arts.persona_json.keys()),
+        "llm_language": llm_language,
+        "llm_model": llm_model,
     }
 
 

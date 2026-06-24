@@ -91,6 +91,18 @@ def _load_persona_json(persona: Persona) -> dict:
     return pj if isinstance(pj, dict) else {}
 
 
+def _persona_model(persona: Persona) -> Optional[str]:
+    """The Ollama model routed to this persona at distill time (by the dominant
+    language of its source log), or ``None`` to fall back to ``settings.ollama_model``.
+    Stored by the distill route under ``meta_json["llm_model"]`` (see model_router)."""
+    try:
+        meta = json.loads(persona.meta_json or "{}")
+    except Exception:
+        return None
+    m = meta.get("llm_model")
+    return m if isinstance(m, str) and m else None
+
+
 def _load_style_overlay(persona: Persona) -> dict:
     """Decrypt + parse the latest Layer-2 style overlay, or ``{}`` if none."""
     if not persona.style_overlay_enc:
@@ -199,6 +211,6 @@ def reply(
     # The latest inbound turn (not yet persisted — E4 persists after sending).
     messages.append({"role": "user", "content": body})
 
-    client = ollama or OllamaClient()
+    client = ollama or OllamaClient(model=_persona_model(persona))
     out = client.chat(messages)
     return split_bubbles(out)

@@ -3,8 +3,9 @@
 Bound to ``settings.ollama_base_url`` (localhost only — never tunnelled). The
 underlying httpx client is injectable so tests can pass a fake transport without
 a running Ollama. Params are always explicit per spec §9: ``num_ctx`` defaults
-to 8192 (Ollama's silent default of 4K is too small) and ``keep_alive='-1'``
-keeps the model resident between turns.
+to 8192 (Ollama's silent default of 4K is too small) and ``keep_alive=-1``
+(the integer, not the string — Ollama 400s on "-1") keeps the model resident
+between turns.
 """
 from __future__ import annotations
 
@@ -56,7 +57,10 @@ class OllamaClient:
             "model": self.model,
             "messages": messages,
             "stream": False,
-            "keep_alive": "-1",
+            # -1 (int) = keep the model resident in VRAM forever. Must be a NUMBER:
+            # Ollama 400s on the string "-1" ("missing unit in duration"); a bare
+            # "-1" only parses as a Go duration with a unit (e.g. "-1m").
+            "keep_alive": -1,
             "options": {"num_ctx": num_ctx, "temperature": temperature},
         }
         data = self._post("/api/chat", payload)
@@ -64,6 +68,6 @@ class OllamaClient:
 
     def embed(self, text: str) -> list[float]:
         """POST /api/embeddings; return the embedding vector (optional RAG)."""
-        payload = {"model": self.embed_model, "prompt": text, "keep_alive": "-1"}
+        payload = {"model": self.embed_model, "prompt": text, "keep_alive": -1}
         data = self._post("/api/embeddings", payload)
         return data["embedding"]
