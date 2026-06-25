@@ -42,7 +42,7 @@ export default function StepGuide({ platform, emoji, steps, note }: StepGuidePro
                   src={step.image}
                   alt={step.title}
                   loading="lazy"
-                  className="mt-2 max-h-56 w-full rounded-xl border border-black/5 object-contain"
+                  className="mt-2 max-h-56 w-full rounded-md border border-hairlinesoft object-contain"
                 />
               )}
             </div>
@@ -50,7 +50,7 @@ export default function StepGuide({ platform, emoji, steps, note }: StepGuidePro
         ))}
       </ol>
       {note && (
-        <p className="mt-4 rounded-2xl bg-tinder-start/[0.06] px-4 py-3 text-sm text-muted">
+        <p className="mt-4 rounded-md bg-surfacesoft px-4 py-3 text-sm text-muted">
           {note}
         </p>
       )}

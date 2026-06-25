@@ -14,64 +14,69 @@
   }
 
   body {
-    @apply bg-neutralbg text-ink font-body antialiased;
+    @apply bg-canvas text-ink font-body antialiased;
     margin: 0;
     -webkit-font-smoothing: antialiased;
   }
 
-  /* Fraunces serif display for headlines — a little optical softness. */
+  /* Airbnb sets headlines in the same Cereal family, tight tracking, heavy weight. */
   h1,
   h2,
   h3 {
-    @apply font-display;
-    font-optical-sizing: auto;
+    @apply font-display tracking-tight;
   }
 }
 
 @layer components {
-  /* The dating-app pill CTA — kept as the signature shape, but with an elegant
-     serif label, oxblood fills, and restrained (non-candy) depth. */
+  /* Pill CTA — the dating-app signature shape, which is also Airbnb's
+     `button-pill-rausch`. Cereal label, weight 600, flat (no candy depth). */
   .pill {
     @apply inline-flex items-center justify-center gap-2 rounded-pill font-display font-semibold
-      tracking-tight transition duration-150 active:scale-[0.98]
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-oxblood/40;
+      transition duration-150 active:scale-[0.98]
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rausch/40 focus-visible:ring-offset-2;
   }
 
-  /* Cream button — used on the oxblood feature surfaces. */
+  /* Primary — Rausch fill, white text (Airbnb's primary action). */
   .pill-primary {
-    @apply pill bg-card text-oxblood shadow-soft px-8 py-3.5 text-lg hover:bg-white;
+    @apply pill bg-rausch text-white px-7 py-3.5 text-base hover:bg-rausch-active;
   }
 
-  /* Hairline button — quiet secondary on the oxblood surfaces. */
+  /* Secondary — white with a 1px ink outline (Airbnb's `button-secondary`). */
   .pill-ghost {
-    @apply pill border border-white/55 text-white px-8 py-3.5 text-lg hover:bg-white/10;
+    @apply pill border border-ink bg-white text-ink px-7 py-3.5 text-base hover:bg-surfacesoft;
   }
 
-  /* Oxblood fill — the primary CTA on paper screens. */
+  /* Strong neutral — solid ink fill (Airbnb's near-black "Next"/"Continue"). */
   .pill-ink {
-    @apply pill bg-tinder-gradient-135 text-white shadow-pill px-8 py-3.5 text-lg
-      hover:brightness-[1.07];
+    @apply pill bg-ink text-white px-7 py-3.5 text-base hover:bg-black;
   }
 
-  /* Rich deep-oxblood feature surface (hero / "moment" screens). */
+  /* Legacy hook — wizard "moment" screens are now the plain white canvas. */
   .gradient-screen {
-    @apply bg-tinder-gradient text-white;
+    @apply bg-canvas text-ink;
   }
 
-  /* Editorial input — warm surface, hairline, oxblood focus. */
+  /* Airbnb text-input — 56px tall, hairline border, 8px radius, 2px ink focus
+     (emulated with a 1px ink ring so there's no layout shift). */
   .field {
-    @apply w-full rounded-xl border border-ink/15 bg-card px-4 py-3 text-base
-      text-ink placeholder:text-muted/60 outline-none transition
-      focus:border-oxblood focus:ring-2 focus:ring-oxblood/15;
+    @apply h-14 w-full rounded-sm border border-hairline bg-white px-3.5 text-base
+      text-ink placeholder:text-muted outline-none transition
+      focus:border-ink focus:ring-1 focus:ring-ink;
   }
 
   .field-label {
-    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted;
+    @apply mb-1.5 block text-sm font-medium text-body;
   }
 
-  /* Small-caps eyebrow label (the editorial "── since 2024" treatment). */
+  /* System error banner — one treatment everywhere (Airbnb error #c13515 on a
+     neutral surface), replacing the ad-hoc red-50/red-600 blocks. */
+  .alert-error {
+    @apply rounded-md border border-hairline bg-surfacesoft px-4 py-2.5 text-sm font-medium text-error;
+  }
+
+  /* Micro-label / eyebrow (Airbnb `uppercase-tag`). */
   .eyebrow {
-    @apply inline-flex items-center gap-2 text-[0.7rem] font-semibold uppercase tracking-[0.2em];
+    @apply inline-flex items-center gap-2 text-[0.7rem] font-bold uppercase tracking-[0.18em];
   }
 }
 

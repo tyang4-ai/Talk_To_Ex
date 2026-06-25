@@ -21,9 +21,9 @@ const STATUS_LABEL: Record<PersonaStatus, string> = {
 };
 
 const STATUS_DOT: Record<PersonaStatus, string> = {
-  draft: "bg-yellow-400",
-  active: "bg-green-500",
-  dormant: "bg-gray-400",
+  draft: "bg-warning",
+  active: "bg-success",
+  dormant: "bg-muted",
 };
 
 export default function Dashboard() {
@@ -115,7 +115,7 @@ export default function Dashboard() {
                 <p className="mt-1 flex items-center gap-2 text-sm text-muted">
                   <span
                     className={`h-2.5 w-2.5 rounded-full ${
-                      persona ? STATUS_DOT[persona.status] : "bg-gray-300"
+                      persona ? STATUS_DOT[persona.status] : "bg-hairline"
                     }`}
                   />
                   {persona ? STATUS_LABEL[persona.status] : "Unknown"}
@@ -123,7 +123,7 @@ export default function Dashboard() {
               </div>
             </div>
             {persona?.number && (
-              <p className="mt-4 rounded-2xl bg-tinder-start/[0.06] px-4 py-2.5 text-sm font-semibold text-ink">
+              <p className="mt-4 rounded-md bg-surfacesoft px-4 py-2.5 text-sm font-semibold text-ink">
                 Texting number: {persona.number.e164}
               </p>
             )}
@@ -164,7 +164,7 @@ export default function Dashboard() {
                 placeholder="They never used emojis. And they'd never call me 'babe'."
               />
               {correctionMsg && (
-                <p className="text-sm font-semibold text-green-600">{correctionMsg}</p>
+                <p className="text-sm font-semibold text-success">{correctionMsg}</p>
               )}
               <GradientButton
                 type="submit"
@@ -192,7 +192,7 @@ export default function Dashboard() {
                 aria-checked={killed}
                 onClick={toggleKill}
                 className={`relative h-8 w-14 shrink-0 rounded-pill transition-colors ${
-                  killed ? "bg-red-500" : "bg-black/15"
+                  killed ? "bg-error" : "bg-surfacestrong"
                 }`}
               >
                 <span
@@ -203,17 +203,13 @@ export default function Dashboard() {
               </button>
             </div>
             {killed && (
-              <p className="mt-3 rounded-2xl bg-red-50 px-4 py-2.5 text-sm font-medium text-red-600">
+              <p className="mt-3 alert-error">
                 Replies are off. Flip the switch back to bring them online.
               </p>
             )}
           </Card>
 
-          {error && (
-            <p className="rounded-2xl bg-red-50 px-4 py-2.5 text-sm font-medium text-red-600">
-              {error}
-            </p>
-          )}
+          {error && <p className="alert-error">{error}</p>}
 
           <button
             onClick={logout}

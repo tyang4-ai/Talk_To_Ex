@@ -12,8 +12,6 @@ interface WizardShellProps {
   totalSteps?: number;
   /** Show a back chevron in the header. */
   onBack?: () => void;
-  /** Render on the full gradient surface instead of the neutral background. */
-  gradient?: boolean;
   title?: string;
   subtitle?: string;
 }
@@ -27,7 +25,6 @@ export default function WizardShell({
   step,
   totalSteps,
   onBack,
-  gradient = false,
   title,
   subtitle,
 }: WizardShellProps) {
@@ -36,19 +33,13 @@ export default function WizardShell({
   const showRail = typeof step === "number" && typeof totalSteps === "number";
 
   return (
-    <div
-      className={`flex min-h-[100dvh] flex-col ${
-        gradient ? "gradient-screen" : "bg-neutralbg text-ink"
-      }`}
-    >
+    <div className="flex min-h-[100dvh] flex-col bg-canvas text-ink">
       <header className="mx-auto flex w-full max-w-md items-center gap-3 px-5 pt-6">
         <button
           type="button"
           onClick={() => (onBack ? onBack() : navigate(-1))}
           aria-label={t("common.back")}
-          className={`flex h-9 w-9 items-center justify-center rounded-pill text-lg transition ${
-            gradient ? "bg-white/15 text-white hover:bg-white/25" : "bg-black/5 hover:bg-black/10"
-          }`}
+          className="flex h-9 w-9 items-center justify-center rounded-pill bg-surfacestrong text-lg text-ink transition hover:bg-hairline"
         >
           ‹
         </button>
@@ -57,21 +48,15 @@ export default function WizardShell({
             {Array.from({ length: totalSteps! }).map((_, i) => (
               <span
                 key={i}
-                className={`h-1.5 flex-1 rounded-pill transition-colors ${
-                  i < step!
-                    ? gradient
-                      ? "bg-white"
-                      : "bg-tinder-mid"
-                    : gradient
-                      ? "bg-white/30"
-                      : "bg-black/10"
+                className={`h-1 flex-1 rounded-pill transition-colors ${
+                  i < step! ? "bg-rausch" : "bg-hairline"
                 }`}
               />
             ))}
           </div>
         )}
         <div className="ml-auto">
-          <LanguageSwitcher light={gradient} />
+          <LanguageSwitcher />
         </div>
       </header>
 
@@ -81,18 +66,8 @@ export default function WizardShell({
         transition={motionPresets.pageIn.transition}
         className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-10 pt-6"
       >
-        {title && (
-          <h1
-            className={`text-display-lg font-extrabold ${gradient ? "text-white" : "text-ink"}`}
-          >
-            {title}
-          </h1>
-        )}
-        {subtitle && (
-          <p className={`mt-2 text-base ${gradient ? "text-white/90" : "text-muted"}`}>
-            {subtitle}
-          </p>
-        )}
+        {title && <h1 className="text-display-lg font-bold text-ink">{title}</h1>}
+        {subtitle && <p className="mt-2 text-base text-muted">{subtitle}</p>}
         <div className={title || subtitle ? "mt-6 flex flex-1 flex-col" : "flex flex-1 flex-col"}>
           {children}
         </div>

@@ -20,16 +20,16 @@ export default function Landing() {
   }
 
   return (
-    <div className="gradient-screen flex min-h-[100dvh] flex-col items-center justify-between px-6 py-10">
+    <div className="flex min-h-[100dvh] flex-col items-center justify-between bg-canvas px-6 py-10 text-ink">
       <header className="flex w-full max-w-md items-center justify-between pt-2">
-        <span className="font-display text-xl font-extrabold tracking-tight text-white">
+        <span className="font-display text-xl font-extrabold tracking-tight text-ink">
           {t("landing.brand")}
         </span>
         <div className="flex items-center gap-3">
-          <LanguageSwitcher light />
+          <LanguageSwitcher />
           <button
             onClick={() => navigate("/auth")}
-            className="text-sm font-semibold text-white/90 underline-offset-2 hover:underline"
+            className="text-sm font-semibold text-ink underline-offset-4 hover:underline"
           >
             {isAuthed() ? t("landing.dashboard") : t("landing.login")}
           </button>
@@ -41,17 +41,17 @@ export default function Landing() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-center text-display-xl font-extrabold leading-[1.02] text-white"
+          className="text-center text-display-xl font-extrabold leading-[1.05] text-ink"
         >
           {t("landing.tagline")}
         </motion.h1>
-        <p className="mt-3 max-w-xs text-center text-base text-white/90">
+        <p className="mt-3 max-w-xs text-center text-base text-body">
           {t("landing.subtitle")}
         </p>
 
         <div className="mt-9 w-full max-w-[20rem]">
           <SwipeCard onSwipeRight={start} onSwipeLeft={start}>
-            <div className="rounded-card border border-ink/[0.06] bg-card p-6 shadow-card">
+            <div className="rounded-card border border-hairline bg-white p-6 shadow-card">
               <div className="flex flex-col items-center">
                 <Avatar name="Your ex" size={128} />
                 <h2 className="mt-4 font-display text-display-md font-semibold text-ink">
@@ -64,7 +64,7 @@ export default function Landing() {
                   {["unread your texts", "left on read", "it's complicated"].map((t) => (
                     <span
                       key={t}
-                      className="rounded-pill border border-oxblood/25 px-3 py-1 text-xs font-semibold text-oxblood"
+                      className="rounded-pill border border-rausch/30 px-3 py-1 text-xs font-semibold text-rausch"
                     >
                       {t}
                     </span>
@@ -73,7 +73,7 @@ export default function Landing() {
               </div>
             </div>
           </SwipeCard>
-          <p className="mt-3 text-center text-xs text-white/70">drag the card — or just tap below</p>
+          <p className="mt-3 text-center text-xs text-muted">drag the card — or just tap below</p>
         </div>
       </main>
 
@@ -81,7 +81,7 @@ export default function Landing() {
         <GradientButton variant="primary" fullWidth onClick={start}>
           {t("landing.cta")}
         </GradientButton>
-        <p className="text-center text-xs text-white/70">
+        <p className="text-center text-xs text-muted">
           Your data is encrypted and never leaves your box (except a one-time distillation).
         </p>
       </footer>

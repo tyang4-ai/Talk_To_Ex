@@ -85,9 +85,7 @@ export default function Plan() {
       </Card>
 
       {error && (
-        <p className="mt-4 rounded-2xl bg-red-50 px-4 py-2.5 text-sm font-medium text-red-600">
-          {error}
-        </p>
+        <p className="mt-4 alert-error">{error}</p>
       )}
 
       <div className="mt-auto pt-8">

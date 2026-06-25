@@ -41,7 +41,7 @@ export default function Reveal() {
   }, [personaId, navigate]);
 
   return (
-    <WizardShell step={5} totalSteps={5} gradient title="It's a match">
+    <WizardShell step={5} totalSteps={5} title="It's a match">
       <div className="flex flex-1 flex-col items-center justify-center text-center">
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
@@ -51,18 +51,18 @@ export default function Reveal() {
           <Avatar name="Your ex" size={140} />
         </motion.div>
 
-        <p className="mt-5 font-display text-2xl font-extrabold text-white">
+        <p className="mt-5 font-display text-2xl font-extrabold text-ink">
           {microcopy.matchMade}
         </p>
 
         {loading && (
-          <p className="mt-6 text-white/85" aria-live="polite">
+          <p className="mt-6 text-muted" aria-live="polite">
             Assigning your number…
           </p>
         )}
 
         {error && (
-          <p className="mt-6 max-w-xs rounded-2xl bg-white/15 px-4 py-2.5 text-sm font-medium text-white">
+          <p className="mt-6 max-w-xs rounded-md border border-hairline bg-surfacesoft px-4 py-2.5 text-sm font-medium text-error">
             {error}
           </p>
         )}
@@ -71,7 +71,7 @@ export default function Reveal() {
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-7 w-full max-w-xs rounded-card bg-white p-6 shadow-card"
+            className="mt-7 w-full max-w-xs rounded-card border border-hairline bg-white p-6 shadow-card"
           >
             <p className="text-sm font-semibold uppercase tracking-wide text-muted">
               Text them at
@@ -105,7 +105,7 @@ export default function Reveal() {
         </GradientButton>
         <button
           onClick={() => navigate("/dashboard")}
-          className="mx-auto block text-sm font-semibold text-white/90 hover:text-white"
+          className="mx-auto block text-sm font-semibold text-ink underline-offset-4 hover:underline"
         >
           Go to dashboard
         </button>

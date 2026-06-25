@@ -47,8 +47,8 @@ export default function ModelPicker({ personaId, initialModel, initialSource }: 
   ];
 
   return (
-    <div className="rounded-2xl bg-white/15 px-4 py-3 text-left">
-      <p className="text-xs font-semibold uppercase tracking-wide text-white/80">
+    <div className="rounded-md border border-hairline bg-surfacesoft px-4 py-3 text-left">
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted">
         {t("model.title")}
       </p>
       <div className="mt-2 flex flex-wrap gap-2">
@@ -62,7 +62,9 @@ export default function ModelPicker({ personaId, initialModel, initialSource }: 
               onClick={() => choose(o.key)}
               aria-pressed={active}
               className={`rounded-pill px-3 py-1.5 text-xs font-bold transition disabled:opacity-60 ${
-                active ? "bg-white text-tinder-start" : "bg-white/15 text-white hover:bg-white/25"
+                active
+                  ? "bg-rausch text-white"
+                  : "border border-hairline bg-white text-body hover:border-ink"
               }`}
             >
               {o.label}
@@ -70,7 +72,7 @@ export default function ModelPicker({ personaId, initialModel, initialSource }: 
           );
         })}
       </div>
-      {err && <p className="mt-2 text-xs font-medium text-white">{err}</p>}
+      {err && <p className="mt-2 text-xs font-medium text-error">{err}</p>}
     </div>
   );
 }

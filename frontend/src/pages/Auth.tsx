@@ -71,9 +71,7 @@ export default function Auth() {
             placeholder="At least 8 characters"
           />
           {error && (
-            <p className="rounded-2xl bg-red-50 px-4 py-2.5 text-sm font-medium text-red-600">
-              {error}
-            </p>
+            <p className="alert-error">{error}</p>
           )}
           <GradientButton type="submit" fullWidth loading={loading}>
             {mode === "register" ? "Create account" : "Log in"}

@@ -24,10 +24,10 @@ export default function ChatBubble({ text, side, typing = false }: ChatBubblePro
       className={`flex w-full ${isFriend ? "justify-end" : "justify-start"}`}
     >
       <div
-        className={`max-w-[78%] rounded-2xl px-4 py-2.5 text-[15px] leading-snug ${
+        className={`max-w-[78%] rounded-card px-4 py-2.5 text-[15px] leading-snug ${
           isFriend
-            ? "rounded-br-sm bg-tinder-gradient-135 text-white shadow-pill"
-            : "rounded-bl-sm border border-ink/10 bg-card text-ink"
+            ? "rounded-br-sm bg-rausch text-white"
+            : "rounded-bl-sm bg-surfacesoft text-ink"
         }`}
       >
         {typing ? <TypingDots /> : text}

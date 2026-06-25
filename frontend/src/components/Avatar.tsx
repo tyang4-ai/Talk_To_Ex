@@ -10,7 +10,7 @@ export default function Avatar({ name, src, size = 96, className = "" }: AvatarP
   const initial = (name?.trim()?.[0] ?? "?").toUpperCase();
   return (
     <div
-      className={`relative shrink-0 overflow-hidden rounded-avatar bg-tinder-gradient-135 shadow-card ring-4 ring-white/70 ${className}`}
+      className={`relative shrink-0 overflow-hidden rounded-avatar bg-tinder-gradient-135 shadow-soft ring-1 ring-hairline ${className}`}
       style={{ width: size, height: size }}
     >
       {src ? (

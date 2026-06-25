@@ -102,8 +102,8 @@ export default function Intake() {
                   aria-pressed={timeSince === opt}
                   className={`rounded-pill border px-4 py-2 text-sm font-semibold transition ${
                     timeSince === opt
-                      ? "border-transparent bg-tinder-gradient-135 text-white shadow-pill"
-                      : "border-black/15 bg-white text-ink hover:border-tinder-mid/60"
+                      ? "border-transparent bg-rausch text-white"
+                      : "border-hairline bg-white text-ink hover:border-ink"
                   }`}
                 >
                   {opt}
@@ -128,8 +128,8 @@ export default function Intake() {
                   aria-pressed={attachment === opt}
                   className={`rounded-pill border px-4 py-2 text-sm font-semibold transition ${
                     attachment === opt
-                      ? "border-transparent bg-tinder-gradient-135 text-white shadow-pill"
-                      : "border-black/15 bg-white text-ink hover:border-tinder-mid/60"
+                      ? "border-transparent bg-rausch text-white"
+                      : "border-hairline bg-white text-ink hover:border-ink"
                   }`}
                 >
                   {opt}
@@ -139,9 +139,7 @@ export default function Intake() {
           </div>
 
           {error && (
-            <p className="rounded-2xl bg-red-50 px-4 py-2.5 text-sm font-medium text-red-600">
-              {error}
-            </p>
+            <p className="alert-error">{error}</p>
           )}
 
           <GradientButton type="submit" fullWidth loading={loading} disabled={!nickname.trim()}>

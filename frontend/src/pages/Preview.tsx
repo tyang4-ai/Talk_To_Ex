@@ -70,11 +70,16 @@ export default function Preview() {
     <WizardShell onBack={() => navigate("/reveal")}>
       <div className="flex flex-1 flex-col">
         {/* Dating-app thread header */}
-        <div className="flex items-center gap-3 border-b border-black/5 pb-4">
+        <div className="flex items-center gap-3 border-b border-hairlinesoft pb-4">
           <Avatar name={exName} size={48} />
           <div>
             <p className="font-display text-lg font-bold text-ink">{exName}</p>
-            <p className="text-xs font-medium text-green-500">● online now</p>
+            <p className="text-xs font-medium text-muted">
+              <span className="text-success" aria-hidden>
+                ●
+              </span>{" "}
+              online now
+            </p>
           </div>
         </div>
 
@@ -92,13 +97,11 @@ export default function Preview() {
         </div>
 
         {error && (
-          <p className="mb-2 rounded-2xl bg-red-50 px-4 py-2 text-sm font-medium text-red-600">
-            {error}
-          </p>
+          <p className="mb-2 alert-error">{error}</p>
         )}
 
         {/* Composer */}
-        <form onSubmit={send} className="flex items-end gap-2 border-t border-black/5 pt-3">
+        <form onSubmit={send} className="flex items-end gap-2 border-t border-hairlinesoft pt-3">
           <input
             className="field flex-1"
             value={draft}

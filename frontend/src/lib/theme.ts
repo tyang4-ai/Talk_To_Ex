@@ -5,34 +5,37 @@
  */
 
 export const gradient = {
-  start: "#B0451F",
-  mid: "#9A3B1A",
-  end: "#7E2F12",
+  start: "#ff385c",
+  mid: "#ff385c",
+  end: "#e00b41",
 } as const;
 
-/** Rich deep-oxblood feature surface (hero / "moment" screens). */
-export const tinderGradient = `linear-gradient(165deg, ${gradient.start} 0%, ${gradient.end} 58%, #6B2710 100%)`;
-export const tinderGradient135 = `linear-gradient(135deg, #B0451F 0%, #8F3416 100%)`;
+/** Airbnb pink-red brand-orb gradient — accent fills only. */
+export const tinderGradient = `linear-gradient(135deg, #ff385c 0%, #e61e4d 100%)`;
+export const tinderGradient135 = `linear-gradient(135deg, #ff385c 0%, #e61e4d 100%)`;
 
 export const colors = {
   ...gradient,
-  oxblood: "#B0451F",
-  ink: "#1C1A17",
-  muted: "#6E665A",
-  line: "#E4DCCC",
-  neutralbg: "#F4EFE6",
-  card: "#FBF8F1",
+  rausch: "#ff385c",
+  oxblood: "#ff385c",
+  ink: "#222222",
+  body: "#3f3f3f",
+  muted: "#6a6a6a",
+  hairline: "#dddddd",
+  canvas: "#ffffff",
+  neutralbg: "#ffffff",
+  card: "#ffffff",
 } as const;
 
 export const radii = {
   pill: 9999,
-  card: 16,
-  avatar: 16,
+  card: 14,
+  avatar: 9999,
 } as const;
 
 export const fonts = {
-  display: '"Fraunces", "Songti SC", Georgia, serif',
-  body: '"Hanken Grotesk", "PingFang SC", ui-sans-serif, system-ui, sans-serif',
+  display: '"Airbnb Cereal VF", "Plus Jakarta Sans", -apple-system, system-ui, sans-serif',
+  body: '"Airbnb Cereal VF", "Plus Jakarta Sans", -apple-system, system-ui, sans-serif',
 } as const;
 
 /** Shared framer-motion presets so motion feels consistent across the wizard. */

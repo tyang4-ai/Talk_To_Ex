@@ -82,8 +82,8 @@ export default function Import() {
             aria-pressed={activeId === g.id}
             className={`flex shrink-0 items-center gap-1.5 rounded-pill px-4 py-2 text-sm font-semibold transition ${
               activeId === g.id
-                ? "bg-tinder-gradient-135 text-white shadow-pill"
-                : "bg-white text-ink ring-1 ring-black/10 hover:ring-tinder-mid/50"
+                ? "bg-rausch text-white"
+                : "bg-white text-ink ring-1 ring-hairline hover:ring-ink"
             }`}
           >
             <span aria-hidden>{g.emoji}</span>
@@ -123,7 +123,7 @@ export default function Import() {
       </div>
 
       {/* Plaintext fallback (universal — esp. WeChat) */}
-      <details className="mt-4 rounded-card bg-white p-4 shadow-soft">
+      <details className="mt-4 rounded-card border border-hairline bg-white p-4 shadow-soft">
         <summary className="cursor-pointer font-display font-semibold text-ink">
           Or paste the messages instead
         </summary>
@@ -153,9 +153,7 @@ export default function Import() {
       </details>
 
       {error && (
-        <p className="mt-4 rounded-2xl bg-red-50 px-4 py-2.5 text-sm font-medium text-red-600">
-          {error}
-        </p>
+        <p className="mt-4 alert-error">{error}</p>
       )}
 
       {/* Parse-preview confirmations: "✓ N messages from [ex]" */}
@@ -166,7 +164,7 @@ export default function Import() {
               key={u.id}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="rounded-card bg-white p-4 shadow-soft"
+              className="rounded-card border border-hairline bg-white p-4 shadow-soft"
             >
               <p className="font-display font-bold text-ink">
                 ✓ {u.message_count.toLocaleString()} messages from {u.ex_name}

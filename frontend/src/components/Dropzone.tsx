@@ -54,8 +54,8 @@ export default function Dropzone({
       aria-busy={busy}
       className={`flex cursor-pointer flex-col items-center justify-center rounded-card border-2 border-dashed px-6 py-10 text-center transition ${
         dragging
-          ? "border-tinder-mid bg-tinder-start/[0.06]"
-          : "border-black/15 bg-white hover:border-tinder-mid/60"
+          ? "border-ink bg-surfacesoft"
+          : "border-hairline bg-white hover:border-ink"
       } ${busy ? "cursor-wait opacity-80" : ""}`}
     >
       <input
@@ -68,9 +68,9 @@ export default function Dropzone({
       {busy ? (
         <div className="w-full">
           <p className="mb-3 font-display font-bold text-ink">Reading your chat…</p>
-          <div className="h-2 w-full overflow-hidden rounded-pill bg-black/10">
+          <div className="h-2 w-full overflow-hidden rounded-pill bg-surfacestrong">
             <div
-              className="h-full rounded-pill bg-tinder-gradient-135 transition-all"
+              className="h-full rounded-pill bg-rausch transition-all"
               style={{ width: `${Math.max(progress, 8)}%` }}
             />
           </div>
@@ -84,7 +84,7 @@ export default function Dropzone({
             Drop your chat export here
           </p>
           <p className="mt-1 text-sm text-muted">or tap to choose a file</p>
-          <p className="mt-3 text-xs text-muted/80">{hint}</p>
+          <p className="mt-3 text-xs text-muted">{hint}</p>
         </>
       )}
     </motion.div>

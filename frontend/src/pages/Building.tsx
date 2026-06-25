@@ -67,7 +67,7 @@ export default function Building() {
   }
 
   return (
-    <WizardShell step={4} totalSteps={5} gradient title="Building them">
+    <WizardShell step={4} totalSteps={5} title="Building them">
       <div className="flex flex-1 flex-col items-center justify-center text-center">
         <motion.div
           animate={{ rotate: done ? 0 : [0, -8, 8, 0], scale: done ? 1.05 : 1 }}
@@ -78,10 +78,10 @@ export default function Building() {
           {done ? "💘" : "💔"}
         </motion.div>
 
-        <p className="mt-6 font-display text-2xl font-bold text-white">
+        <p className="mt-6 font-display text-2xl font-bold text-ink">
           {done ? t("building.matchMade") : stages[stage]}
         </p>
-        <p className="mt-2 max-w-xs text-sm text-white/85">
+        <p className="mt-2 max-w-xs text-sm text-muted">
           {done ? t("building.doneBlurb") : t("building.blurb")}
         </p>
 
@@ -90,8 +90,8 @@ export default function Building() {
             {stages.map((_, i) => (
               <span
                 key={i}
-                className={`h-1.5 flex-1 rounded-pill transition-colors ${
-                  i <= stage ? "bg-white" : "bg-white/30"
+                className={`h-1 flex-1 rounded-pill transition-colors ${
+                  i <= stage ? "bg-rausch" : "bg-hairline"
                 }`}
               />
             ))}
@@ -100,7 +100,7 @@ export default function Building() {
 
         {error && (
           <div className="mt-8 w-full max-w-xs space-y-3">
-            <p className="rounded-2xl bg-white/15 px-4 py-2.5 text-sm font-medium text-white">
+            <p className="rounded-md border border-hairline bg-surfacesoft px-4 py-2.5 text-sm font-medium text-error">
               {error}
             </p>
             <GradientButton variant="primary" fullWidth onClick={retry}>
