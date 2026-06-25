@@ -5,3 +5,6 @@ dist/
 *.local
 .vite/
 coverage/
+# personal tip-jar QR — served on the live site, kept out of the public repo
+public/tip/zelle-qr.png
+public/tip/*.jpg
