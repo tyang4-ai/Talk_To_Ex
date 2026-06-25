@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import datetime
 from typing import Any, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -12,6 +13,7 @@ from sqlmodel import Session, select
 
 from ..auth.deps import get_current_user
 from ..billing.number_service import provision
+from ..config import settings
 from ..convo.engine import reply as engine_reply
 from ..convo.model_router import pick_model
 from ..db import Number, Persona, Upload, User, get_session
@@ -20,6 +22,15 @@ from ..ingestion.upload import load_normalized
 from ..persona import store
 
 router = APIRouter(prefix="/api/personas", tags=["personas"])
+
+
+def _language_for_model(model: str) -> str:
+    """Best-effort language label for an explicitly-chosen model (spec §26)."""
+    if model == settings.ollama_model_zh:
+        return "zh"
+    if model == settings.ollama_model_en:
+        return "en"
+    return "manual"
 
 
 def _slugify(name: str) -> str:
@@ -127,15 +138,27 @@ def distill_persona(
     for u in uploads:
         transcript.extend(load_normalized(u))
 
-    intake = json.loads(persona.meta_json or "{}").get("intake", {})
+    persona_meta = json.loads(persona.meta_json or "{}")
+    intake = persona_meta.get("intake", {})
+    override = persona_meta.get("llm_model_override")
+
     arts = distill(transcript, intake)  # real Claude call at runtime (needs key)
     arts.meta["intake"] = intake  # keep intake so re-distill stays possible
 
-    # Hybrid routing: pick the local model from the log's dominant language and
-    # pin it on the persona so the live engine answers on the best-fit model.
-    llm_language, llm_model = pick_model(transcript)
+    # Hybrid routing (spec §22/§26): a user override wins; otherwise pick the
+    # local model from the log's dominant language. Either way it's pinned on the
+    # persona so the live engine answers on the best-fit model.
+    if override:
+        llm_model = override
+        llm_language = _language_for_model(override)
+        arts.meta["llm_model_override"] = override  # survive re-distill
+        source = "manual"
+    else:
+        llm_language, llm_model = pick_model(transcript)
+        source = "auto"
     arts.meta["llm_language"] = llm_language
     arts.meta["llm_model"] = llm_model
+    arts.meta["llm_model_source"] = source
 
     store.save_artifacts(persona_id, arts, session)
     return {
@@ -145,6 +168,63 @@ def distill_persona(
         "layers": list(arts.persona_json.keys()),
         "llm_language": llm_language,
         "llm_model": llm_model,
+        "llm_model_source": source,
+    }
+
+
+class ModelIn(BaseModel):
+    model: str  # one of OLLAMA_MODEL_ZH / OLLAMA_MODEL_EN, or "auto" to re-detect
+
+
+@router.post("/{persona_id}/model")
+def set_persona_model(
+    persona_id: int,
+    body: ModelIn,
+    user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+) -> dict:
+    """Override (or reset to auto) the local model that voices this persona.
+
+    The choice is stored on the persona and takes effect immediately — the live
+    engine reads ``meta_json["llm_model"]`` per reply — and survives re-distill
+    via ``llm_model_override``. ``"auto"`` clears the override and re-detects from
+    the uploaded log's dominant language (spec §22/§26)."""
+    persona = _owned(session, user, persona_id)
+    model = body.model.strip()
+    allowed = {settings.ollama_model_zh, settings.ollama_model_en, "auto"}
+    if model not in allowed:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            f"model must be one of {sorted(allowed)}",
+        )
+
+    meta = json.loads(persona.meta_json or "{}")
+    if model == "auto":
+        meta.pop("llm_model_override", None)
+        meta["llm_model_source"] = "auto"
+        uploads = session.exec(
+            select(Upload).where(Upload.persona_id == persona_id)
+        ).all()
+        if uploads:
+            transcript: list[dict] = []
+            for u in uploads:
+                transcript.extend(load_normalized(u))
+            meta["llm_language"], meta["llm_model"] = pick_model(transcript)
+    else:
+        meta["llm_model_override"] = model
+        meta["llm_model"] = model
+        meta["llm_language"] = _language_for_model(model)
+        meta["llm_model_source"] = "manual"
+
+    persona.meta_json = json.dumps(meta, ensure_ascii=False)
+    persona.updated_at = datetime.utcnow()
+    session.add(persona)
+    session.commit()
+    return {
+        "ok": True,
+        "llm_model": meta.get("llm_model"),
+        "llm_language": meta.get("llm_language"),
+        "source": meta.get("llm_model_source"),
     }
 
 
