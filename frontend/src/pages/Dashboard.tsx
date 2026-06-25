@@ -4,6 +4,7 @@ import WizardShell from "../components/WizardShell";
 import Card from "../components/Card";
 import GradientButton from "../components/GradientButton";
 import Avatar from "../components/Avatar";
+import TipJar from "../components/TipJar";
 import { TextAreaField } from "../components/Field";
 import {
   api,
@@ -210,6 +211,8 @@ export default function Dashboard() {
           </Card>
 
           {error && <p className="alert-error">{error}</p>}
+
+          <TipJar />
 
           <button
             onClick={logout}

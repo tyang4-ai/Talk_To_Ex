@@ -17,6 +17,9 @@ os.environ.setdefault("DATABASE_URL", "sqlite:///./_test_ttx.db")
 # Shield the suite from a DEMO_MODE=true in backend/.env (env vars outrank .env):
 # tests run in production semantics; demo branches are exercised via monkeypatch.
 os.environ.setdefault("DEMO_MODE", "false")
+# Likewise shield from REQUIRE_SUBSCRIPTION=false (the free-for-all switch) so the
+# paywall tests exercise the real billing gate; free-mode is tested via monkeypatch.
+os.environ.setdefault("REQUIRE_SUBSCRIPTION", "true")
 
 
 # --- Binary parser fixtures ---------------------------------------------------

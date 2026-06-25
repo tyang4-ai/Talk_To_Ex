@@ -48,6 +48,11 @@ class Settings(BaseSettings):
     # owner must have an active subscription to keep getting replies.
     free_message_limit: int = 200
 
+    # Master billing switch. When False the paywall is disabled entirely (free for
+    # everyone) — independent of demo_mode, so live Claude distillation and Twilio
+    # SMS still run normally. Flip True (and wire Stripe) to start charging.
+    require_subscription: bool = True
+
     # Demo mode (spec: localhost dry-run) — bypass the paid externals (Claude
     # distillation, Stripe gate, Twilio number) with local fallbacks so the whole
     # wizard is clickable end-to-end with NO external accounts. OFF in production.

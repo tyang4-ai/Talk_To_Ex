@@ -99,6 +99,16 @@ def test_active_subscription_bypasses_limit(db_engine, seed):
         assert metering.should_paywall(s, seed) is False
 
 
+def test_free_mode_disables_paywall(db_engine, seed, monkeypatch):
+    """The free-for-all switch opens replies regardless of count or subscription."""
+    _seed_inbound(db_engine, seed, 9)  # well past the limit, inactive sub
+    monkeypatch.setattr(settings, "require_subscription", False)
+    with Session(db_engine) as s:
+        assert metering.over_free_limit(s, seed) is True
+        assert metering.subscription_active(s, seed) is True
+        assert metering.should_paywall(s, seed) is False
+
+
 # --- gate in _respond ------------------------------------------------------
 def test_respond_paywalls_over_limit(db_engine, seed, monkeypatch):
     _seed_inbound(db_engine, seed, 2)  # at the free limit, inactive

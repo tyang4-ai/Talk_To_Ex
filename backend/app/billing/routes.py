@@ -18,8 +18,9 @@ class CheckoutResponse(BaseModel):
 
 @router.post("/checkout", response_model=CheckoutResponse)
 def checkout(user: User = Depends(get_current_user)) -> CheckoutResponse:
-    # Demo mode: skip Stripe entirely — send the user straight into the wizard.
-    if settings.demo_mode:
+    # Billing off (demo, or free-for-all): skip Stripe entirely — send the user
+    # straight into the wizard.
+    if settings.demo_mode or not settings.require_subscription:
         return CheckoutResponse(url="/intake")
     try:
         url = stripe_service.create_checkout(user)

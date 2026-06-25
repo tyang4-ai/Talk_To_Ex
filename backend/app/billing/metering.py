@@ -34,8 +34,12 @@ def inbound_count(session: Session, persona_id: int) -> int:
 
 
 def subscription_active(session: Session, persona_id: int) -> bool:
-    """Whether the persona's owning user has an active subscription (demo: always)."""
-    if settings.demo_mode:
+    """Whether the persona's owning user has an active subscription.
+
+    Always True when billing is off (demo mode, or the free-for-all master switch
+    ``require_subscription=False``) — replies never paywall.
+    """
+    if settings.demo_mode or not settings.require_subscription:
         return True
     persona = session.get(Persona, persona_id)
     if persona is None:
