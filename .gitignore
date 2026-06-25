@@ -28,3 +28,6 @@ frontend/dist/
 .DS_Store
 Thumbs.db
 nul
+
+# local agent/session state
+.claude/
