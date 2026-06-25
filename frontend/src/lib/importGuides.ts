@@ -1,7 +1,17 @@
 import type { GuideStep } from "../components/StepGuide";
 
 export interface PlatformGuide {
-  id: "instagram" | "whatsapp" | "iphone" | "wechat" | "android";
+  id:
+    | "instagram"
+    | "facebook"
+    | "whatsapp"
+    | "iphone"
+    | "wechat"
+    | "android"
+    | "discord"
+    | "telegram"
+    | "email"
+    | "other";
   platform: string;
   emoji: string;
   steps: GuideStep[];
@@ -118,6 +128,98 @@ export const importGuides: PlatformGuide[] = [
       { title: "Upload the .xml below" },
     ],
     note: "Backup type 1 = received, type 2 = sent — we map who-said-what automatically.",
+  },
+  {
+    id: "facebook",
+    platform: "Facebook / Messenger",
+    emoji: "🟦",
+    accept: ".zip,.json",
+    hint: "Upload the Messenger .zip (or message_*.json)",
+    steps: [
+      { title: "Open Settings & privacy → Accounts Center" },
+      { title: "Go to Your information and permissions → Download your information" },
+      {
+        title: "Request the export — Messages, JSON format",
+        detail: "Pick Messages only and Format: JSON (not HTML) for the cleanest parse.",
+      },
+      {
+        title: "Wait for the email, then download the .zip",
+        detail: "Meta emails a link when it's ready (minutes to a day).",
+      },
+      { title: "Upload the .zip below" },
+    ],
+    note: "Messenger uses the same Meta export as Instagram — we stitch the paginated files and repair garbled accents for you.",
+  },
+  {
+    id: "discord",
+    platform: "Discord",
+    emoji: "🎮",
+    accept: ".json,.csv",
+    hint: "Upload a DiscordChatExporter .json",
+    steps: [
+      {
+        title: "Get DiscordChatExporter",
+        detail: "It's a free, open-source tool — Discord's own data download only includes YOUR messages, not theirs.",
+      },
+      { title: "Export the DM with your ex", detail: "Choose Format: JSON." },
+      { title: "Upload the .json below", detail: "It has both sides of the conversation." },
+    ],
+    note: "Both sides of the DM come through — we tell who's who from the message authors.",
+  },
+  {
+    id: "telegram",
+    platform: "Telegram",
+    emoji: "✈️",
+    accept: ".json",
+    hint: "Upload Telegram's result.json",
+    steps: [
+      { title: "Open Telegram Desktop", detail: "The export lives in the desktop app, not mobile." },
+      { title: "Open the chat → ⋯ → Export chat history" },
+      {
+        title: "Choose JSON, uncheck media",
+        detail: "Machine-readable JSON gives the cleanest result; media isn't needed.",
+      },
+      { title: "Upload result.json below" },
+    ],
+    note: "We read Telegram's formatted-text messages (bold, links, etc.) as plain text.",
+  },
+  {
+    id: "email",
+    platform: "Email",
+    emoji: "✉️",
+    accept: ".mbox,.eml",
+    hint: "Upload a .mbox (or a single .eml)",
+    steps: [
+      {
+        title: "Gmail: use Google Takeout",
+        detail: "takeout.google.com → Mail → export. You'll get a .mbox file.",
+      },
+      {
+        title: "Or save individual emails as .eml",
+        detail: "Most desktop mail apps let you drag an email out as a .eml file.",
+      },
+      { title: "Upload the .mbox or .eml below" },
+    ],
+    note: "Great for capturing how they wrote to you in longer form. We strip quoted replies and signatures.",
+  },
+  {
+    id: "other",
+    platform: "Anything else",
+    emoji: "🗂️",
+    accept: ".txt,.csv,.json,.zip,.html,.pdf",
+    hint: "Upload any text/CSV/JSON export — or paste below",
+    steps: [
+      {
+        title: "Export your chat however you can",
+        detail: "Most apps (Signal, Line, Slack, Kakao, Snapchat, …) can export or copy to text, CSV, or JSON.",
+      },
+      { title: "Upload the file below", detail: "Our generic reader handles common date/sender/message layouts." },
+      {
+        title: "Nothing exports cleanly? Paste it",
+        detail: "Open the chat, copy the messages, and paste them in the box below — that always works.",
+      },
+    ],
+    note: "When in doubt, this is the catch-all. If we can't auto-detect it, the plaintext paste never fails.",
   },
 ];
 

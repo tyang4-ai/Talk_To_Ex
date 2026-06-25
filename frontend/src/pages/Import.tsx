@@ -30,19 +30,28 @@ export default function Import() {
   const active = importGuides.find((g) => g.id === activeId)!;
   const totalMessages = uploads.reduce((sum, u) => sum + u.message_count, 0);
 
-  async function handleFile(file: File) {
-    if (personaId === null) return;
+  async function handleFiles(files: File[]) {
+    if (personaId === null || files.length === 0) return;
     setError(null);
     setBusy(true);
-    setProgress(0);
-    try {
-      const result = await api.uploadFile(personaId, file, setProgress);
-      setUploads((prev) => [...prev, result]);
-    } catch (err) {
-      setError(errorMessage(err, "Couldn't read that file. Try the plaintext paste below."));
-    } finally {
-      setBusy(false);
+    const failures: string[] = [];
+    // Upload each selected file in turn, accumulating results — you can mix
+    // sources (WhatsApp + Discord + email …) and they all feed one persona.
+    for (const file of files) {
       setProgress(0);
+      try {
+        const result = await api.uploadFile(personaId, file, setProgress);
+        setUploads((prev) => [...prev, result]);
+      } catch (err) {
+        failures.push(`${file.name} (${errorMessage(err, "couldn't read it")})`);
+      }
+    }
+    setBusy(false);
+    setProgress(0);
+    if (failures.length === 1) {
+      setError(`Couldn't read ${failures[0]}. Try the plaintext paste below.`);
+    } else if (failures.length > 1) {
+      setError(`Couldn't read ${failures.length} files: ${failures.join("; ")}`);
     }
   }
 
@@ -114,7 +123,7 @@ export default function Import() {
       {/* Dropzone */}
       <div className="mt-4">
         <Dropzone
-          onFile={handleFile}
+          onFiles={handleFiles}
           busy={busy}
           progress={progress}
           accept={active.accept}

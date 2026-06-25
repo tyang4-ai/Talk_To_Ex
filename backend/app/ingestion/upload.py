@@ -36,9 +36,14 @@ UPLOADS_ROOT = Path(__file__).resolve().parents[2] / "uploads"
 _PARSER_MODULES = {
     "imessage": "imessage",
     "instagram": "instagram",
+    "facebook": "instagram",  # Facebook Messenger uses the same Meta schema
     "whatsapp": "whatsapp",
     "wechat": "wechat",
     "sms": "sms",
+    "discord": "discord",
+    "telegram": "telegram",
+    "email": "mail",
+    "generic": "generic",
     "plaintext": "plaintext",
 }
 

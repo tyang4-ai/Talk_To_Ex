@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import { motion } from "framer-motion";
 
 interface DropzoneProps {
-  onFile: (file: File) => void;
+  onFiles: (files: File[]) => void;
   busy?: boolean;
   progress?: number; // 0-100 while uploading
   accept?: string;
@@ -15,20 +15,20 @@ interface DropzoneProps {
  * "✓ N messages from [ex]" confirmation afterward.
  */
 export default function Dropzone({
-  onFile,
+  onFiles,
   busy = false,
   progress = 0,
-  accept = ".zip,.txt,.json,.xml,.csv,.db,.pdf,.html",
-  hint = "ZIP, TXT, JSON, XML, CSV, DB, PDF",
+  accept = ".zip,.txt,.json,.xml,.csv,.db,.pdf,.html,.mbox,.eml",
+  hint = "ZIP, TXT, JSON, XML, CSV, DB, PDF, MBOX, EML",
 }: DropzoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
 
   const handleFiles = useCallback(
     (files: FileList | null) => {
-      if (files && files.length > 0) onFile(files[0]);
+      if (files && files.length > 0) onFiles(Array.from(files));
     },
-    [onFile],
+    [onFiles],
   );
 
   return (
@@ -50,7 +50,7 @@ export default function Dropzone({
       onKeyDown={(e) => {
         if ((e.key === "Enter" || e.key === " ") && !busy) inputRef.current?.click();
       }}
-      aria-label="Upload your chat export"
+      aria-label="Upload your chat exports"
       aria-busy={busy}
       className={`flex cursor-pointer flex-col items-center justify-center rounded-card border-2 border-dashed px-6 py-10 text-center transition ${
         dragging
@@ -62,12 +62,13 @@ export default function Dropzone({
         ref={inputRef}
         type="file"
         accept={accept}
+        multiple
         className="hidden"
         onChange={(e) => handleFiles(e.target.files)}
       />
       {busy ? (
         <div className="w-full">
-          <p className="mb-3 font-display font-bold text-ink">Reading your chat…</p>
+          <p className="mb-3 font-display font-bold text-ink">Reading your chats…</p>
           <div className="h-2 w-full overflow-hidden rounded-pill bg-surfacestrong">
             <div
               className="h-full rounded-pill bg-rausch transition-all"
@@ -81,9 +82,9 @@ export default function Dropzone({
             💌
           </span>
           <p className="font-display text-lg font-bold text-ink">
-            Drop your chat export here
+            Drop your chat exports here
           </p>
-          <p className="mt-1 text-sm text-muted">or tap to choose a file</p>
+          <p className="mt-1 text-sm text-muted">or tap to choose files — add as many as you like</p>
           <p className="mt-3 text-xs text-muted">{hint}</p>
         </>
       )}

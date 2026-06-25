@@ -11,10 +11,14 @@ from typing import Callable, Dict, List, Optional
 from ftfy import fix_text
 
 from .parsers import (
+    discord,
+    generic,
     imessage,
     instagram,
+    mail,
     plaintext,
     sms,
+    telegram,
     wechat,
     whatsapp,
 )
@@ -25,9 +29,14 @@ from .parsers.detect import detect_format
 _PARSERS: Dict[str, Callable[..., NormalizedTranscript]] = {
     "imessage": imessage.parse,
     "instagram": instagram.parse,
+    "facebook": instagram.parse,  # same Meta schema
     "whatsapp": whatsapp.parse,
     "wechat": wechat.parse,
     "sms": sms.parse,
+    "discord": discord.parse,
+    "telegram": telegram.parse,
+    "email": mail.parse,
+    "generic": generic.parse,
     "plaintext": plaintext.parse,
 }
 
