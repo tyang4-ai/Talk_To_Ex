@@ -65,3 +65,13 @@ cloudflared service install <YOUR_TUNNEL_TOKEN>
 ## 3. What's done vs what needs you
 - **Done (in this repo):** all backend services (auth, billing, ingestion+parsers, distillation, conversation engine + style re-tuning, messaging + safety), the React wizard, ops configs, and mock-based tests.
 - **Needs you (host-only):** real API keys, `ollama pull`, the cloudflared tunnel token, Twilio number + toll-free verification (consent = the friend's own sign-up), Stripe product/price, and a live end-to-end text.
+
+## 4. v2 additions (the SaaS layer)
+Design + plan: `docs/superpowers/{specs,plans}/2026-06-25-talk-to-ex-v2*`. Built and mock-tested (epics E10–E14, all green); E15 (frontend i18n/override/guides) + E16 docs remain.
+
+- **Topology:** inference now runs on **atlas (Tesla T4)** over Tailscale — set `OLLAMA_BASE_URL=http://100.73.71.126:11434`; the **4090** runs the app + fine-tune training. `ollama pull qwen2.5:14b-instruct-q4_K_M` **and** `gemma3:12b` on atlas (the router picks per persona).
+- **New env keys (see `backend/.env.example`):** `OLLAMA_MODEL_ZH`, `OLLAMA_MODEL_EN`, `MODEL_ROUTE_CJK_THRESHOLD`, `FREE_MESSAGE_LIMIT`, `FINETUNE_ENABLED`, `FINETUNE_TRAINER`, `TRAIN_OLLAMA_HOST`.
+- **Gotcha already fixed:** Ollama needs the **integer** `keep_alive: -1`, not the string `"-1"` (string 400s).
+- **Per-persona fine-tuning (host-only):** the pipeline is wired + mock-tested, but the real QLoRA train → GGUF → `ollama create` steps run on the 4090 — follow **`ops/finetune/setup.md`** and inject the runners. Until then the `finetune` job fails loudly with a host-only message (by design).
+- **Proactive opener compliance:** the persona texts the friend FIRST — keep a consent record (signup + number, stored as `meta_json["peer_e164"]`/`opt_in_at`), honor STOP (Twilio + the kill-switch), and the curated opener + every generated reply pass the **outbound** safety screen.
+- **Freemium:** `FREE_MESSAGE_LIMIT` (default 200) free inbound messages per persona, then the existing Stripe subscription gates replies (paywall SMS).

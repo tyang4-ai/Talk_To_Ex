@@ -51,6 +51,27 @@ Single process, single SQLite DB, single tunnel. Ollama bound to localhost only.
 
 ---
 
+## v2 — SaaS layer (in progress)
+
+Beyond the v1 scaffold above, the project is growing into a small real-feeling
+SaaS. Full design: [`docs/superpowers/specs/2026-06-25-talk-to-ex-v2-design.md`](docs/superpowers/specs/2026-06-25-talk-to-ex-v2-design.md);
+plan (epics E10–E16): [`docs/superpowers/plans/2026-06-25-talk-to-ex-v2.md`](docs/superpowers/plans/2026-06-25-talk-to-ex-v2.md).
+
+| Feature | Status |
+|---|---|
+| **Hybrid model routing** — log language picks the local model (zh→Qwen, en→Gemma), user-overridable | ✅ backend (`app/convo/model_router.py`, `POST /api/personas/{id}/model`) |
+| **Freemium metering** — `FREE_MESSAGE_LIMIT` free messages, then a Stripe subscription (paywall SMS) | ✅ backend (`app/billing/metering.py`) |
+| **Async job queue** — persisted `Job` queue + worker for long out-of-process work | ✅ backend (`app/jobs/`) |
+| **Per-persona fine-tuning** — QLoRA voice adapter, served as a `persona-<id>` Ollama model | ✅ orchestration mock-tested (`app/finetune/`); ⚠️ real training is host-only → [`ops/finetune/setup.md`](ops/finetune/setup.md) |
+| **The "reveal"** — on training-done the persona texts the friend FIRST with a curated apology opener; outbound safety screen | ✅ backend (`app/messaging/{reveal,opener}.py`, `safety.screen_outbound`) |
+| **Portal i18n (zh/en) + guided-upload screenshots + model-override UI** | ⏳ frontend (E15) |
+
+**Topology change (v2):** inference runs on **atlas (Tesla T4)** over Tailscale
+(`OLLAMA_BASE_URL=http://100.73.71.126:11434`); the **RTX 4090** runs the app and
+the fine-tune training jobs. Ollama stays on the private tailnet — never tunnelled.
+
+---
+
 ## Repo layout
 
 ```

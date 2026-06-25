@@ -106,6 +106,18 @@ export interface PersonaDetail {
   uploads: UploadResult[];
   distilled: boolean;
   number?: AssignedNumber | null;
+  // Hybrid model routing (§22/§26): the local model voicing this persona, the
+  // detected/chosen language, and whether it was "auto" or "manual".
+  llm_model?: string | null;
+  llm_language?: string | null;
+  llm_model_source?: "auto" | "manual" | null;
+}
+
+/** POST /api/personas/{id}/model — override the persona's local model (§26). */
+export interface ModelChoiceResponse {
+  llm_model: string;
+  llm_language: string;
+  source: "auto" | "manual";
 }
 
 /** POST /api/personas/{id}/uploads — instant parse preview (spec §10.1). */
@@ -166,8 +178,23 @@ export const api = {
   },
 
   // Persona lifecycle
-  async createPersona(name: string, intake: IntakeAnswers): Promise<PersonaSummary> {
-    const { data } = await http.post<PersonaSummary>("/personas", { name, intake });
+  async createPersona(
+    name: string,
+    intake: IntakeAnswers,
+    peerE164?: string, // the friend's own phone, so the persona can text first (§24)
+  ): Promise<PersonaSummary> {
+    const { data } = await http.post<PersonaSummary>("/personas", {
+      name,
+      intake,
+      peer_e164: peerE164,
+    });
+    return data;
+  },
+  /** Override the persona's local model — "auto" re-detects from the log (§26). */
+  async setPersonaModel(id: number, model: string): Promise<ModelChoiceResponse> {
+    const { data } = await http.post<ModelChoiceResponse>(`/personas/${id}/model`, {
+      model,
+    });
     return data;
   },
   async getPersona(id: number): Promise<PersonaDetail> {
