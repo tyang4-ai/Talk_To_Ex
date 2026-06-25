@@ -107,6 +107,20 @@ class StyleTuning(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
+class Job(SQLModel, table=True):
+    """Async work item (spec §28): a persisted queue so a long fine-tune (§23)
+    runs out-of-process without blocking the web app. status:
+    queued → training → ready | failed."""
+    id: Optional[int] = Field(default=None, primary_key=True)
+    persona_id: int = Field(foreign_key="persona.id", index=True)
+    kind: str = "finetune"
+    status: str = "queued"  # queued|training|ready|failed
+    adapter_path: Optional[str] = None
+    error: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
 engine = create_engine(
     settings.database_url,
     echo=False,
