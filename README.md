@@ -51,6 +51,32 @@ Single process, single SQLite DB, single tunnel. Ollama bound to localhost only.
 
 ---
 
+## Try it locally — demo mode (no external accounts)
+
+Run the **whole website** on `localhost:8080` with **zero** API keys. `DEMO_MODE`
+swaps the paid externals for local fallbacks (heuristic persona distillation
+instead of Claude; Stripe + Twilio bypassed), while the in-browser persona chat
+uses the **real local model** (Ollama, `OLLAMA_BASE_URL` → atlas by default).
+
+```powershell
+# one command — builds the SPA if needed, serves SPA+API in demo mode
+.\scripts\run-demo.ps1
+# then open http://localhost:8080 and click through:
+#   register → choose plan → 3 questions → upload a chat log → build → reveal → chat
+```
+
+Verify it headlessly (whole flow incl. a real model reply):
+```powershell
+cd backend; .\.venv\Scripts\python.exe ..\scripts\smoke_demo.py
+```
+
+What works in demo: the entire wizard + **live in-browser chat with the persona**.
+What still needs real keys (live only): **SMS** (Twilio), **real billing** (Stripe),
+and the public **Cloudflare tunnel**. Set `DEMO_MODE=false` and fill `backend/.env`
+to go live.
+
+---
+
 ## v2 — SaaS layer (in progress)
 
 Beyond the v1 scaffold above, the project is growing into a small real-feeling
