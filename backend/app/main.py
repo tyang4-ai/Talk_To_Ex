@@ -6,9 +6,25 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .config import settings
 from .db import init_db
+
+
+class SPAStaticFiles(StaticFiles):
+    """Static files with single-page-app fallback: any missing path that isn't an
+    API/asset request serves index.html, so client-side routes (``/intake``,
+    ``/dashboard`` …) work on deep-link and refresh, not just in-app navigation."""
+
+    async def get_response(self, path: str, scope):
+        try:
+            return await super().get_response(path, scope)
+        except StarletteHTTPException as exc:
+            req_path = scope.get("path", "") or ""
+            if exc.status_code == 404 and not req_path.startswith("/api"):
+                return await super().get_response("index.html", scope)
+            raise
 
 
 @asynccontextmanager
@@ -63,4 +79,4 @@ _include_routers()
 
 _frontend_dist = Path(__file__).resolve().parents[2] / "frontend" / "dist"
 if _frontend_dist.exists():
-    app.mount("/", StaticFiles(directory=str(_frontend_dist), html=True), name="frontend")
+    app.mount("/", SPAStaticFiles(directory=str(_frontend_dist), html=True), name="frontend")

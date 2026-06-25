@@ -15,7 +15,7 @@ export type Lang = "en" | "zh";
 
 const en = {
   landing: {
-    brand: "talk to your ex 💔",
+    brand: "Ex.Change",
     tagline: "Swipe right on your ex 💔", // keep in sync with lib/theme microcopy
     subtitle:
       "Distill their voice from your old chats. Text them one more time — on your terms.",
@@ -49,7 +49,7 @@ const en = {
 
 const zh = {
   landing: {
-    brand: "和你的前任聊聊 💔",
+    brand: "Ex.Change",
     tagline: "向你的前任右滑 💔",
     subtitle: "从你们的旧聊天里提炼出 TA 的语气。再发一次消息——这次由你做主。",
     cta: "生成 TA 的档案 →",

@@ -13,13 +13,15 @@ interface StepGuideProps {
   steps: GuideStep[];
   /** A short note rendered under the steps (e.g. the plaintext fallback hint). */
   note?: ReactNode;
+  /** Optional link to an external how-to, rendered under the steps/note. */
+  tutorial?: { label: string; url: string };
 }
 
 /**
  * Numbered per-platform export walkthrough (spec §10.1). The numbering encodes a
  * real ordered sequence — the friend must do step N before N+1.
  */
-export default function StepGuide({ platform, emoji, steps, note }: StepGuideProps) {
+export default function StepGuide({ platform, emoji, steps, note, tutorial }: StepGuideProps) {
   return (
     <div>
       <div className="mb-4 flex items-center gap-2">
@@ -53,6 +55,16 @@ export default function StepGuide({ platform, emoji, steps, note }: StepGuidePro
         <p className="mt-4 rounded-md bg-surfacesoft px-4 py-3 text-sm text-muted">
           {note}
         </p>
+      )}
+      {tutorial && (
+        <a
+          href={tutorial.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-4 inline-block text-sm font-semibold text-rausch"
+        >
+          ▶ {tutorial.label}
+        </a>
       )}
     </div>
   );

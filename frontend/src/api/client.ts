@@ -205,6 +205,11 @@ export const api = {
     });
     return data;
   },
+  /** GET /api/personas — every persona this user owns (the ex switcher). */
+  async listPersonas(): Promise<PersonaSummary[]> {
+    const { data } = await http.get<PersonaSummary[]>("/personas");
+    return data;
+  },
   async getPersona(id: number): Promise<PersonaDetail> {
     const { data } = await http.get<PersonaDetail>(`/personas/${id}`);
     return data;

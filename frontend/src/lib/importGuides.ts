@@ -18,6 +18,8 @@ export interface PlatformGuide {
   note?: string;
   accept: string;
   hint: string;
+  /** Optional link to an external how-to (e.g. a YouTube search or official help page). */
+  tutorial?: { label: string; url: string };
 }
 
 /** Per-platform export walkthroughs, verbatim from spec §10.1. */
@@ -42,6 +44,10 @@ export const importGuides: PlatformGuide[] = [
       { title: "Upload the .zip below", detail: "We auto-detect the format and find your chat." },
     ],
     note: "Exports are newest-first and paginated — we sort and stitch them back together for you.",
+    tutorial: {
+      label: "Watch: how to export Instagram →",
+      url: "https://www.youtube.com/results?search_query=how+to+export+instagram+chat+history",
+    },
   },
   {
     id: "whatsapp",
@@ -63,6 +69,10 @@ export const importGuides: PlatformGuide[] = [
       { title: "Upload the _chat.txt below" },
     ],
     note: "On a Chinese phone? If you see 上午/下午 timestamps, re-export with the phone language set to English or 24-hour time for the cleanest parse.",
+    tutorial: {
+      label: "Read: WhatsApp export help →",
+      url: "https://faq.whatsapp.com/",
+    },
   },
   {
     id: "iphone",
@@ -86,6 +96,10 @@ export const importGuides: PlatformGuide[] = [
       { title: "Upload sms.db below", detail: "Or upload a text export from 3uTools / iMazing." },
     ],
     note: "We read your messages locally and decode the modern iOS format properly — Chinese text stays intact.",
+    tutorial: {
+      label: "Watch: how to export iPhone messages →",
+      url: "https://www.youtube.com/results?search_query=how+to+export+iphone+imessage+chat+history",
+    },
   },
   {
     id: "wechat",
@@ -105,6 +119,10 @@ export const importGuides: PlatformGuide[] = [
       },
     ],
     note: "WeChat is best-effort — the plaintext paste fallback always works, so you're never stuck.",
+    tutorial: {
+      label: "Watch: how to export WeChat →",
+      url: "https://www.youtube.com/results?search_query=how+to+export+wechat+chat+history",
+    },
   },
   {
     id: "android",
@@ -128,6 +146,10 @@ export const importGuides: PlatformGuide[] = [
       { title: "Upload the .xml below" },
     ],
     note: "Backup type 1 = received, type 2 = sent — we map who-said-what automatically.",
+    tutorial: {
+      label: "Watch: how to export Android SMS →",
+      url: "https://www.youtube.com/results?search_query=how+to+export+android+sms+chat+history",
+    },
   },
   {
     id: "facebook",
@@ -149,6 +171,10 @@ export const importGuides: PlatformGuide[] = [
       { title: "Upload the .zip below" },
     ],
     note: "Messenger uses the same Meta export as Instagram — we stitch the paginated files and repair garbled accents for you.",
+    tutorial: {
+      label: "Watch: how to export Facebook →",
+      url: "https://www.youtube.com/results?search_query=how+to+export+facebook+messenger+chat+history",
+    },
   },
   {
     id: "discord",
@@ -165,6 +191,10 @@ export const importGuides: PlatformGuide[] = [
       { title: "Upload the .json below", detail: "It has both sides of the conversation." },
     ],
     note: "Both sides of the DM come through — we tell who's who from the message authors.",
+    tutorial: {
+      label: "Watch: how to export Discord →",
+      url: "https://www.youtube.com/results?search_query=how+to+export+discord+chat+history",
+    },
   },
   {
     id: "telegram",
@@ -182,6 +212,10 @@ export const importGuides: PlatformGuide[] = [
       { title: "Upload result.json below" },
     ],
     note: "We read Telegram's formatted-text messages (bold, links, etc.) as plain text.",
+    tutorial: {
+      label: "Watch: how to export Telegram →",
+      url: "https://www.youtube.com/results?search_query=how+to+export+telegram+chat+history",
+    },
   },
   {
     id: "email",
@@ -201,6 +235,10 @@ export const importGuides: PlatformGuide[] = [
       { title: "Upload the .mbox or .eml below" },
     ],
     note: "Great for capturing how they wrote to you in longer form. We strip quoted replies and signatures.",
+    tutorial: {
+      label: "Open: Google Takeout →",
+      url: "https://takeout.google.com/",
+    },
   },
   {
     id: "other",
@@ -220,6 +258,10 @@ export const importGuides: PlatformGuide[] = [
       },
     ],
     note: "When in doubt, this is the catch-all. If we can't auto-detect it, the plaintext paste never fails.",
+    tutorial: {
+      label: "Watch: how to export your chat →",
+      url: "https://www.youtube.com/results?search_query=how+to+export+chat+history",
+    },
   },
 ];
 

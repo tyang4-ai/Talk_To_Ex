@@ -81,8 +81,8 @@ export default function Import() {
       title="Bring the chats"
       subtitle="Pick where you talked. We auto-detect the format — you never choose one."
     >
-      {/* Platform tabs */}
-      <div className="-mx-1 mb-4 flex gap-2 overflow-x-auto px-1 pb-1">
+      {/* Platform tabs (py-2 so the chip rings aren't clipped by overflow-x) */}
+      <div className="-mx-1 mb-4 flex gap-2 overflow-x-auto px-1 py-2">
         {importGuides.map((g) => (
           <button
             key={g.id}
@@ -115,6 +115,7 @@ export default function Import() {
               emoji={active.emoji}
               steps={active.steps}
               note={active.note}
+              tutorial={active.tutorial}
             />
           </Card>
         </motion.div>

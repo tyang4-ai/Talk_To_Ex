@@ -29,7 +29,7 @@ export function TextAreaField({ label, id, rows = 3, ...rest }: TextAreaFieldPro
       <label htmlFor={fieldId} className="field-label">
         {label}
       </label>
-      <textarea id={fieldId} rows={rows} className="field resize-none" {...rest} />
+      <textarea id={fieldId} rows={rows} className="field-area" {...rest} />
     </div>
   );
 }

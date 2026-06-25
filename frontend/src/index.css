@@ -68,6 +68,14 @@
     @apply mb-1.5 block text-sm font-medium text-body;
   }
 
+  /* Multiline variant — like .field but height grows with `rows` (no fixed 56px),
+     padded for top-aligned text so it reads as a proper textarea. */
+  .field-area {
+    @apply w-full resize-none rounded-sm border border-hairline bg-white px-3.5 py-3
+      text-base leading-relaxed text-ink placeholder:text-muted outline-none transition
+      focus:border-ink focus:ring-1 focus:ring-ink;
+  }
+
   /* System error banner — one treatment everywhere (Airbnb error #c13515 on a
      neutral surface), replacing the ad-hoc red-50/red-600 blocks. */
   .alert-error {

@@ -34,7 +34,7 @@ export default function WizardShell({
 
   return (
     <div className="flex min-h-[100dvh] flex-col bg-canvas text-ink">
-      <header className="mx-auto flex w-full max-w-md items-center gap-3 px-5 pt-6">
+      <header className="mx-auto flex w-full max-w-2xl items-center gap-3 px-5 pt-6">
         <button
           type="button"
           onClick={() => (onBack ? onBack() : navigate(-1))}
@@ -64,7 +64,7 @@ export default function WizardShell({
         initial={motionPresets.pageIn.initial}
         animate={motionPresets.pageIn.animate}
         transition={motionPresets.pageIn.transition}
-        className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-10 pt-6"
+        className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-5 pb-10 pt-6"
       >
         {title && <h1 className="text-display-lg font-bold text-ink">{title}</h1>}
         {subtitle && <p className="mt-2 text-base text-muted">{subtitle}</p>}
