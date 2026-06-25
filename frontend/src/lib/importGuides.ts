@@ -1,7 +1,7 @@
 import type { GuideStep } from "../components/StepGuide";
 
 export interface PlatformGuide {
-  id: "instagram" | "whatsapp" | "iphone" | "wechat";
+  id: "instagram" | "whatsapp" | "iphone" | "wechat" | "android";
   platform: string;
   emoji: string;
   steps: GuideStep[];
@@ -96,4 +96,33 @@ export const importGuides: PlatformGuide[] = [
     ],
     note: "WeChat is best-effort — the plaintext paste fallback always works, so you're never stuck.",
   },
+  {
+    id: "android",
+    platform: "Android (SMS & MMS)",
+    emoji: "🤖",
+    accept: ".xml,.csv",
+    hint: "Upload the SMS Backup & Restore .xml",
+    steps: [
+      {
+        title: 'Install "SMS Backup & Restore"',
+        detail: "It's free on the Play Store (by SyncTech).",
+      },
+      {
+        title: "Tap Set up a backup → Messages",
+        detail: "You can include just your ex's conversation, or everything.",
+      },
+      {
+        title: "Back up to a local file",
+        detail: "Choose phone storage; it writes an .xml file.",
+      },
+      { title: "Upload the .xml below" },
+    ],
+    note: "Backup type 1 = received, type 2 = sent — we map who-said-what automatically.",
+  },
 ];
+
+/**
+ * Add your OWN annotated screenshots (spec §27 — never forum-lifted) by setting
+ * `image` on any step above, e.g. `{ title: "...", image: "/guides/whatsapp-export.png" }`,
+ * and dropping the file in `frontend/public/guides/`. StepGuide renders it inline.
+ */

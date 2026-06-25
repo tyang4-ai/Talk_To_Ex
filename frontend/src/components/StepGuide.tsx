@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 export interface GuideStep {
   title: string;
   detail?: ReactNode;
+  /** Optional path to your OWN annotated screenshot (spec §27 — not forum-lifted). */
+  image?: string;
 }
 
 interface StepGuideProps {
@@ -35,6 +37,14 @@ export default function StepGuide({ platform, emoji, steps, note }: StepGuidePro
             <div className="pt-0.5">
               <p className="font-semibold text-ink">{step.title}</p>
               {step.detail && <p className="mt-0.5 text-sm text-muted">{step.detail}</p>}
+              {step.image && (
+                <img
+                  src={step.image}
+                  alt={step.title}
+                  loading="lazy"
+                  className="mt-2 max-h-56 w-full rounded-xl border border-black/5 object-contain"
+                />
+              )}
             </div>
           </li>
         ))}
