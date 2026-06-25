@@ -1,9 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import GradientButton from "../components/GradientButton";
 import SwipeCard from "../components/SwipeCard";
 import Avatar from "../components/Avatar";
-import { microcopy } from "../lib/theme";
+import LanguageSwitcher from "../components/LanguageSwitcher";
 import { isAuthed } from "../api/client";
 
 /**
@@ -12,6 +13,7 @@ import { isAuthed } from "../api/client";
  */
 export default function Landing() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   function start() {
     navigate(isAuthed() ? "/plan" : "/auth");
@@ -21,14 +23,17 @@ export default function Landing() {
     <div className="gradient-screen flex min-h-[100dvh] flex-col items-center justify-between px-6 py-10">
       <header className="flex w-full max-w-md items-center justify-between pt-2">
         <span className="font-display text-xl font-extrabold tracking-tight text-white">
-          talk to your ex 💔
+          {t("landing.brand")}
         </span>
-        <button
-          onClick={() => navigate("/auth")}
-          className="text-sm font-semibold text-white/90 underline-offset-2 hover:underline"
-        >
-          {isAuthed() ? "Dashboard" : "Log in"}
-        </button>
+        <div className="flex items-center gap-3">
+          <LanguageSwitcher light />
+          <button
+            onClick={() => navigate("/auth")}
+            className="text-sm font-semibold text-white/90 underline-offset-2 hover:underline"
+          >
+            {isAuthed() ? t("landing.dashboard") : t("landing.login")}
+          </button>
+        </div>
       </header>
 
       <main className="flex w-full max-w-md flex-1 flex-col items-center justify-center">
@@ -38,10 +43,10 @@ export default function Landing() {
           transition={{ duration: 0.5 }}
           className="text-center text-display-xl font-extrabold leading-[1.02] text-white"
         >
-          {microcopy.tagline}
+          {t("landing.tagline")}
         </motion.h1>
         <p className="mt-3 max-w-xs text-center text-base text-white/90">
-          Distill their voice from your old chats. Text them one more time — on your terms.
+          {t("landing.subtitle")}
         </p>
 
         <div className="mt-9 w-full max-w-[20rem]">
@@ -72,7 +77,7 @@ export default function Landing() {
 
       <footer className="w-full max-w-md space-y-3 pb-2">
         <GradientButton variant="primary" fullWidth onClick={start}>
-          Build their profile →
+          {t("landing.cta")}
         </GradientButton>
         <p className="text-center text-xs text-white/70">
           Your data is encrypted and never leaves your box (except a one-time distillation).

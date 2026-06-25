@@ -1,26 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import WizardShell from "../components/WizardShell";
 import GradientButton from "../components/GradientButton";
+import ModelPicker from "../components/ModelPicker";
 import { api, errorMessage } from "../api/client";
 import { getDraftPersonaId } from "../lib/draft";
-import { microcopy } from "../lib/theme";
-
-const STAGES = [
-  "Reading your chats",
-  "Learning their voice",
-  "Mapping the in-jokes",
-  "Bottling the chaos",
-  "Almost them",
-];
 
 export default function Building() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const stages = t("building.stages", { returnObjects: true }) as unknown as string[];
   const personaId = getDraftPersonaId();
   const [stage, setStage] = useState(0);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [model, setModel] = useState<string | null>(null);
+  const [modelSource, setModelSource] = useState<string | null>(null);
   const started = useRef(false);
 
   useEffect(() => {
@@ -31,23 +28,26 @@ export default function Building() {
     if (started.current) return;
     started.current = true;
 
-    // Animate the stage labels while the (slow) Claude distillation runs.
+    // Animate the stage labels while the (slow) distillation runs.
     const ticker = setInterval(() => {
-      setStage((s) => (s < STAGES.length - 1 ? s + 1 : s));
+      setStage((s) => (s < stages.length - 1 ? s + 1 : s));
     }, 1600);
 
     api
       .distill(personaId)
-      .then(() => {
-        setStage(STAGES.length - 1);
+      .then((res) => {
+        setModel(res.llm_model ?? null);
+        setModelSource(res.llm_model_source ?? null);
+        setStage(stages.length - 1);
         setDone(true);
       })
       .catch((err) => {
-        setError(errorMessage(err, "Distillation hit a snag. You can retry."));
+        setError(errorMessage(err, t("building.retry")));
       })
       .finally(() => clearInterval(ticker));
 
     return () => clearInterval(ticker);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [personaId, navigate]);
 
   async function retry() {
@@ -56,11 +56,13 @@ export default function Building() {
     setDone(false);
     setStage(0);
     try {
-      await api.distill(personaId);
-      setStage(STAGES.length - 1);
+      const res = await api.distill(personaId);
+      setModel(res.llm_model ?? null);
+      setModelSource(res.llm_model_source ?? null);
+      setStage(stages.length - 1);
       setDone(true);
     } catch (err) {
-      setError(errorMessage(err, "Still failing. Try again in a bit."));
+      setError(errorMessage(err, t("building.retry")));
     }
   }
 
@@ -77,17 +79,15 @@ export default function Building() {
         </motion.div>
 
         <p className="mt-6 font-display text-2xl font-bold text-white">
-          {done ? microcopy.matchMade : STAGES[stage]}
+          {done ? t("building.matchMade") : stages[stage]}
         </p>
         <p className="mt-2 max-w-xs text-sm text-white/85">
-          {done
-            ? "Their voice is bottled and encrypted. Ready to meet them?"
-            : microcopy.buildingBlurb}
+          {done ? t("building.doneBlurb") : t("building.blurb")}
         </p>
 
         {!done && !error && (
           <div className="mt-8 flex w-full max-w-xs items-center gap-1.5" aria-hidden>
-            {STAGES.map((_, i) => (
+            {stages.map((_, i) => (
               <span
                 key={i}
                 className={`h-1.5 flex-1 rounded-pill transition-colors ${
@@ -104,16 +104,19 @@ export default function Building() {
               {error}
             </p>
             <GradientButton variant="primary" fullWidth onClick={retry}>
-              Try again
+              {t("common.tryAgain")}
             </GradientButton>
           </div>
         )}
       </div>
 
       {done && (
-        <div className="pt-6">
+        <div className="space-y-4 pt-6">
+          {personaId !== null && (
+            <ModelPicker personaId={personaId} initialModel={model} initialSource={modelSource} />
+          )}
           <GradientButton variant="primary" fullWidth onClick={() => navigate("/reveal")}>
-            Meet them →
+            {t("building.meet")}
           </GradientButton>
         </div>
       )}

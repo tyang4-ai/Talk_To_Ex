@@ -1,7 +1,9 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import type { ReactNode } from "react";
 import { motionPresets } from "../lib/theme";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 interface WizardShellProps {
   children: ReactNode;
@@ -30,6 +32,7 @@ export default function WizardShell({
   subtitle,
 }: WizardShellProps) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const showRail = typeof step === "number" && typeof totalSteps === "number";
 
   return (
@@ -42,7 +45,7 @@ export default function WizardShell({
         <button
           type="button"
           onClick={() => (onBack ? onBack() : navigate(-1))}
-          aria-label="Go back"
+          aria-label={t("common.back")}
           className={`flex h-9 w-9 items-center justify-center rounded-pill text-lg transition ${
             gradient ? "bg-white/15 text-white hover:bg-white/25" : "bg-black/5 hover:bg-black/10"
           }`}
@@ -67,6 +70,9 @@ export default function WizardShell({
             ))}
           </div>
         )}
+        <div className="ml-auto">
+          <LanguageSwitcher light={gradient} />
+        </div>
       </header>
 
       <motion.main

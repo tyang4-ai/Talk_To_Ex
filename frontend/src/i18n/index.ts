@@ -1,0 +1,110 @@
+/**
+ * Portal internationalization (spec §26a) — Chinese / English.
+ *
+ * Synchronous, resource-inline i18next so `t()` returns real values on first
+ * render (no Provider needed — components use the global instance). The chosen
+ * language persists in localStorage. Translate copy incrementally: any key not
+ * yet localized simply falls back to English.
+ */
+import i18n from "i18next";
+import { initReactI18next } from "react-i18next";
+
+const STORAGE_KEY = "ttx_lang";
+
+export type Lang = "en" | "zh";
+
+const en = {
+  landing: {
+    brand: "talk to your ex 💔",
+    tagline: "Swipe right on your ex 💔", // keep in sync with lib/theme microcopy
+    subtitle:
+      "Distill their voice from your old chats. Text them one more time — on your terms.",
+    cta: "Build their profile →",
+    login: "Log in",
+    dashboard: "Dashboard",
+  },
+  common: { back: "Go back", tryAgain: "Try again", change: "Change" },
+  model: {
+    title: "Your ex will text on",
+    auto: "Auto",
+    autoHint: "Detected from your chats",
+    qwen: "Qwen · best for Chinese",
+    gemma: "Gemma · best for English",
+  },
+  building: {
+    stages: [
+      "Reading your chats",
+      "Learning their voice",
+      "Mapping the in-jokes",
+      "Bottling the chaos",
+      "Almost them",
+    ],
+    blurb: "Reading your chats. Learning their voice.",
+    matchMade: "It's a match… sort of",
+    doneBlurb: "Their voice is bottled and encrypted. Ready to meet them?",
+    meet: "Meet them →",
+    retry: "Distillation hit a snag. You can retry.",
+  },
+};
+
+const zh = {
+  landing: {
+    brand: "和你的前任聊聊 💔",
+    tagline: "向你的前任右滑 💔",
+    subtitle: "从你们的旧聊天里提炼出 TA 的语气。再发一次消息——这次由你做主。",
+    cta: "生成 TA 的档案 →",
+    login: "登录",
+    dashboard: "控制台",
+  },
+  common: { back: "返回", tryAgain: "再试一次", change: "更改" },
+  model: {
+    title: "你的前任将使用以下模型回复",
+    auto: "自动",
+    autoHint: "根据聊天记录检测",
+    qwen: "Qwen · 中文最佳",
+    gemma: "Gemma · 英文最佳",
+  },
+  building: {
+    stages: [
+      "正在读取聊天记录",
+      "正在学习 TA 的语气",
+      "正在记下你们的梗",
+      "正在封装那些混乱",
+      "就快是 TA 了",
+    ],
+    blurb: "正在读取聊天记录，学习 TA 的语气。",
+    matchMade: "算是……配对成功了",
+    doneBlurb: "TA 的语气已封装并加密。准备好见 TA 了吗？",
+    meet: "去见 TA →",
+    retry: "提炼遇到点问题，可以重试。",
+  },
+};
+
+function stored(): Lang {
+  try {
+    const v = localStorage.getItem(STORAGE_KEY);
+    if (v === "zh" || v === "en") return v;
+  } catch {
+    /* no localStorage (SSR/tests) */
+  }
+  return "en";
+}
+
+i18n.use(initReactI18next).init({
+  resources: { en: { translation: en }, zh: { translation: zh } },
+  lng: stored(),
+  fallbackLng: "en",
+  interpolation: { escapeValue: false },
+  initImmediate: false, // synchronous → values available on first render
+});
+
+export function setLanguage(lng: Lang): void {
+  void i18n.changeLanguage(lng);
+  try {
+    localStorage.setItem(STORAGE_KEY, lng);
+  } catch {
+    /* ignore */
+  }
+}
+
+export default i18n;

@@ -1,6 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 import { afterEach, vi } from "vitest";
 import { cleanup } from "@testing-library/react";
+import "../i18n"; // initialize the global i18n instance so t() returns real values in tests
 
 afterEach(() => {
   cleanup();
