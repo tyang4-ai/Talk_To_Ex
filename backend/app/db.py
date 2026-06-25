@@ -95,6 +95,7 @@ class SafetyEvent(SQLModel, table=True):
     conversation_id: int = Field(foreign_key="conversation.id", index=True)
     kind: str
     body: str
+    direction: str = "in"  # "in" = inbound crisis trip; "out" = blocked generated reply (§24.4)
     ts: datetime = Field(default_factory=datetime.utcnow)
 
 

@@ -70,6 +70,32 @@ def check(body: str) -> SafetyVerdict:
     return SafetyVerdict(crisis=False)
 
 
+def screen_outbound(text: str) -> bool:
+    """Return True if generated/outbound ``text`` is safe to send (spec §24.4).
+
+    The deterministic tripwire also guards what the persona SAYS — especially the
+    unprompted opener — not just what the friend says. False = blocked."""
+    return not check(text).crisis
+
+
+def record_blocked_outbound(
+    session: Session, conv: Conversation, text: str
+) -> SafetyEvent:
+    """Log a blocked outbound reply (direction=out) and alert the operator."""
+    event = SafetyEvent(
+        conversation_id=conv.id, kind="blocked_outbound", body=text, direction="out"
+    )
+    session.add(event)
+    session.commit()
+    session.refresh(event)
+    log.warning(
+        "BLOCKED outbound on conversation %s (peer=%s): %r",
+        conv.id, conv.peer_e164, text,
+    )
+    _alert_operator(conv, text)
+    return event
+
+
 def _alert_operator(conv: Conversation, body: str) -> None:
     """Notify the operator of a crisis hit (log always; email is a stub).
 

@@ -50,6 +50,7 @@ def _owned(session: Session, user: User, persona_id: int) -> Persona:
 class CreatePersona(BaseModel):
     name: str
     intake: dict[str, Any] = {}
+    peer_e164: Optional[str] = None  # the friend's own phone — so the persona can text first (§24)
 
 
 class PersonaSummary(BaseModel):
@@ -92,11 +93,14 @@ def create_persona(
     user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> PersonaSummary:
+    meta: dict[str, Any] = {"intake": body.intake}
+    if body.peer_e164:
+        meta["peer_e164"] = body.peer_e164
     persona = Persona(
         user_id=user.id,
         slug=_slugify(body.name),
         name=body.name,
-        meta_json=json.dumps({"intake": body.intake}, ensure_ascii=False),
+        meta_json=json.dumps(meta, ensure_ascii=False),
         status="draft",
     )
     session.add(persona)

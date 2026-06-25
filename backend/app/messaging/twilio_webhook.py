@@ -117,6 +117,13 @@ def _respond(persona_id: int, peer_e164: str, our_number: str, body: str) -> Non
             # 1) Generate the reply from prior context + this (unpersisted) turn.
             bubbles = engine.reply(session, persona_id, peer_e164, body)
 
+            # 1b) Outbound safety screen (§24.4): never send model output that
+            # trips the deterministic tripwire — block the whole reply + log.
+            if not all(safety.screen_outbound(b) for b in bubbles):
+                safety.record_blocked_outbound(session, conv, " / ".join(bubbles))
+                history.append(session, conv, "in", body)  # count the inbound
+                return
+
             # 2) Send each bubble out via Twilio REST (to the friend, from us).
             sender.send_bubbles(to=peer_e164, from_=our_number, bubbles=bubbles)
 
