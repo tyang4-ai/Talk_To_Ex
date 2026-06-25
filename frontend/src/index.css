@@ -19,49 +19,59 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  /* Bold tight display type for headlines */
+  /* Fraunces serif display for headlines — a little optical softness. */
   h1,
   h2,
   h3 {
     @apply font-display;
+    font-optical-sizing: auto;
   }
 }
 
 @layer components {
-  /* Round pill CTA — the signature button shape */
+  /* The dating-app pill CTA — kept as the signature shape, but with an elegant
+     serif label, oxblood fills, and restrained (non-candy) depth. */
   .pill {
-    @apply inline-flex items-center justify-center gap-2 rounded-pill font-display font-bold
-      tracking-tight transition-transform duration-150 active:scale-[0.97]
-      focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/50;
+    @apply inline-flex items-center justify-center gap-2 rounded-pill font-display font-semibold
+      tracking-tight transition duration-150 active:scale-[0.98]
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-oxblood/40;
   }
 
+  /* Cream button — used on the oxblood feature surfaces. */
   .pill-primary {
-    @apply pill bg-white text-tinder-start shadow-pill px-8 py-4 text-lg;
+    @apply pill bg-card text-oxblood shadow-soft px-8 py-3.5 text-lg hover:bg-white;
   }
 
+  /* Hairline button — quiet secondary on the oxblood surfaces. */
   .pill-ghost {
-    @apply pill border-2 border-white/70 text-white px-8 py-4 text-lg
-      hover:bg-white/10;
+    @apply pill border border-white/55 text-white px-8 py-3.5 text-lg hover:bg-white/10;
   }
 
+  /* Oxblood fill — the primary CTA on paper screens. */
   .pill-ink {
-    @apply pill bg-tinder-gradient-135 text-white shadow-pill px-8 py-4 text-lg;
+    @apply pill bg-tinder-gradient-135 text-white shadow-pill px-8 py-3.5 text-lg
+      hover:brightness-[1.07];
   }
 
-  /* Full-bleed gradient surface used on hero/wizard screens */
+  /* Rich deep-oxblood feature surface (hero / "moment" screens). */
   .gradient-screen {
     @apply bg-tinder-gradient text-white;
   }
 
-  /* Input used inside cards */
+  /* Editorial input — warm surface, hairline, oxblood focus. */
   .field {
-    @apply w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-base
-      text-ink placeholder:text-muted/70 outline-none transition
-      focus:border-tinder-mid focus:ring-4 focus:ring-tinder-mid/15;
+    @apply w-full rounded-xl border border-ink/15 bg-card px-4 py-3 text-base
+      text-ink placeholder:text-muted/60 outline-none transition
+      focus:border-oxblood focus:ring-2 focus:ring-oxblood/15;
   }
 
   .field-label {
-    @apply mb-1.5 block text-sm font-semibold text-ink;
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted;
+  }
+
+  /* Small-caps eyebrow label (the editorial "── since 2024" treatment). */
+  .eyebrow {
+    @apply inline-flex items-center gap-2 text-[0.7rem] font-semibold uppercase tracking-[0.2em];
   }
 }
 

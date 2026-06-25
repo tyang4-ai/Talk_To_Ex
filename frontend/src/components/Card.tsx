@@ -13,7 +13,7 @@ interface CardProps {
 export default function Card({ children, className = "", still = false }: CardProps) {
   if (still) {
     return (
-      <div className={`rounded-card bg-card p-6 shadow-soft ${className}`}>{children}</div>
+      <div className={`rounded-card border border-ink/[0.07] bg-card p-6 shadow-soft ${className}`}>{children}</div>
     );
   }
   return (
@@ -21,7 +21,7 @@ export default function Card({ children, className = "", still = false }: CardPr
       initial={motionPresets.cardIn.initial}
       animate={motionPresets.cardIn.animate}
       transition={motionPresets.cardIn.transition}
-      className={`rounded-card bg-card p-6 shadow-soft ${className}`}
+      className={`rounded-card border border-ink/[0.07] bg-card p-6 shadow-soft ${className}`}
     >
       {children}
     </motion.div>

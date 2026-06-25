@@ -5,32 +5,34 @@
  */
 
 export const gradient = {
-  start: "#FD297B",
-  mid: "#FF5864",
-  end: "#FF655B",
+  start: "#B0451F",
+  mid: "#9A3B1A",
+  end: "#7E2F12",
 } as const;
 
-/** Vertical coral->pink gradient — the locked brand surface. */
-export const tinderGradient = `linear-gradient(180deg, ${gradient.start} 0%, ${gradient.mid} 55%, ${gradient.end} 100%)`;
-export const tinderGradient135 = `linear-gradient(135deg, ${gradient.start} 0%, ${gradient.mid} 55%, ${gradient.end} 100%)`;
+/** Rich deep-oxblood feature surface (hero / "moment" screens). */
+export const tinderGradient = `linear-gradient(165deg, ${gradient.start} 0%, ${gradient.end} 58%, #6B2710 100%)`;
+export const tinderGradient135 = `linear-gradient(135deg, #B0451F 0%, #8F3416 100%)`;
 
 export const colors = {
   ...gradient,
-  ink: "#1F1A24",
-  muted: "#6B6470",
-  neutralbg: "#FBF7F4",
-  card: "#FFFFFF",
+  oxblood: "#B0451F",
+  ink: "#1C1A17",
+  muted: "#6E665A",
+  line: "#E4DCCC",
+  neutralbg: "#F4EFE6",
+  card: "#FBF8F1",
 } as const;
 
 export const radii = {
   pill: 9999,
-  card: 28,
-  avatar: 32,
+  card: 16,
+  avatar: 16,
 } as const;
 
 export const fonts = {
-  display: '"Poppins", "Inter", system-ui, sans-serif',
-  body: '"Inter", system-ui, sans-serif',
+  display: '"Fraunces", "Songti SC", Georgia, serif',
+  body: '"Hanken Grotesk", "PingFang SC", ui-sans-serif, system-ui, sans-serif',
 } as const;
 
 /** Shared framer-motion presets so motion feels consistent across the wizard. */

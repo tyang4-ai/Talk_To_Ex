@@ -51,18 +51,20 @@ export default function Landing() {
 
         <div className="mt-9 w-full max-w-[20rem]">
           <SwipeCard onSwipeRight={start} onSwipeLeft={start}>
-            <div className="rounded-card bg-white p-5 shadow-card">
+            <div className="rounded-card border border-ink/[0.06] bg-card p-6 shadow-card">
               <div className="flex flex-col items-center">
-                <Avatar name="Your ex" size={132} />
-                <h2 className="mt-4 text-display-md font-bold text-ink">Your ex, 25</h2>
-                <p className="mt-1 text-center text-sm text-muted">
+                <Avatar name="Your ex" size={128} />
+                <h2 className="mt-4 font-display text-display-md font-semibold text-ink">
+                  Your ex, 25
+                </h2>
+                <p className="mt-1 text-center text-sm italic text-muted">
                   Says they've changed. The data says otherwise.
                 </p>
-                <div className="mt-3 flex flex-wrap justify-center gap-2">
+                <div className="mt-4 flex flex-wrap justify-center gap-2">
                   {["unread your texts", "left on read", "it's complicated"].map((t) => (
                     <span
                       key={t}
-                      className="rounded-pill bg-tinder-start/[0.08] px-3 py-1 text-xs font-semibold text-tinder-start"
+                      className="rounded-pill border border-oxblood/25 px-3 py-1 text-xs font-semibold text-oxblood"
                     >
                       {t}
                     </span>
