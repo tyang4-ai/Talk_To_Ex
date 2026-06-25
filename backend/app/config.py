@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     ollama_model_en: str = "gemma3:12b"
     model_route_cjk_threshold: float = 0.5  # CJK char fraction >= this -> zh (Qwen)
 
+    # Freemium metering (spec §25): N free inbound messages per persona, then the
+    # owner must have an active subscription to keep getting replies.
+    free_message_limit: int = 200
+
     # Ops / safety
     cloudflare_tunnel_token: str = ""
     operator_alert_email: str = ""

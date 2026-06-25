@@ -29,6 +29,7 @@ from sqlmodel import Session, select
 
 from twilio.request_validator import RequestValidator
 
+from ..billing import metering
 from ..config import settings
 from ..convo import engine, history, style_tuner, summary
 from ..db import Conversation, Number, engine as db_engine
@@ -100,6 +101,18 @@ def _respond(persona_id: int, peer_e164: str, our_number: str, body: str) -> Non
     try:
         with Session(db_engine) as session:
             conv = engine.get_or_create_conversation(session, persona_id, peer_e164)
+
+            # 0) Freemium gate (spec §25): past the free allowance and no active
+            # subscription → send the paywall instead of a persona reply. Crisis
+            # safety already ran in the webhook, so it is never short-circuited.
+            if metering.should_paywall(session, persona_id):
+                sender.send_bubbles(
+                    to=peer_e164,
+                    from_=our_number,
+                    bubbles=[metering.paywall_message()],
+                )
+                history.append(session, conv, "in", body)  # count it; no reply
+                return
 
             # 1) Generate the reply from prior context + this (unpersisted) turn.
             bubbles = engine.reply(session, persona_id, peer_e164, body)
