@@ -53,6 +53,11 @@ class CreatePersona(BaseModel):
     peer_e164: Optional[str] = None  # the friend's own phone — so the persona can text first (§24)
 
 
+class NumberOut(BaseModel):
+    e164: str
+    mode: str
+
+
 class PersonaSummary(BaseModel):
     id: int
     slug: str
@@ -61,7 +66,8 @@ class PersonaSummary(BaseModel):
     uploads: int
     message_count: int
     has_artifacts: bool
-    number: Optional[str] = None
+    distilled: bool  # alias of has_artifacts for the frontend
+    number: Optional[NumberOut] = None
     llm_model: Optional[str] = None
     llm_language: Optional[str] = None
 
@@ -73,6 +79,7 @@ def _summary(session: Session, p: Persona) -> PersonaSummary:
         meta = json.loads(p.meta_json or "{}")
     except Exception:
         meta = {}
+    distilled = bool(p.persona_md_enc)
     return PersonaSummary(
         id=p.id,
         slug=p.slug,
@@ -80,8 +87,9 @@ def _summary(session: Session, p: Persona) -> PersonaSummary:
         status=p.status,
         uploads=len(uploads),
         message_count=sum(u.message_count for u in uploads),
-        has_artifacts=bool(p.persona_md_enc),
-        number=num.e164 if num else None,
+        has_artifacts=distilled,
+        distilled=distilled,
+        number=NumberOut(e164=num.e164, mode=num.mode) if num else None,
         llm_model=meta.get("llm_model"),
         llm_language=meta.get("llm_language"),
     )
@@ -248,6 +256,29 @@ def activate_persona(
     session.add(persona)
     session.commit()
     return {"ok": True, "e164": number.e164, "mode": number.mode}
+
+
+class KillIn(BaseModel):
+    enabled: bool
+
+
+@router.post("/{persona_id}/kill")
+def kill_persona(
+    persona_id: int,
+    body: KillIn,
+    user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+) -> dict:
+    """Per-persona silence toggle (operator kill-switch). Records the flag on the
+    persona; the messaging path honors it alongside the global KILL_SWITCH."""
+    persona = _owned(session, user, persona_id)
+    meta = json.loads(persona.meta_json or "{}")
+    meta["killed"] = body.enabled
+    persona.meta_json = json.dumps(meta, ensure_ascii=False)
+    persona.updated_at = datetime.utcnow()
+    session.add(persona)
+    session.commit()
+    return {"ok": True, "killed": body.enabled}
 
 
 class CorrectionIn(BaseModel):

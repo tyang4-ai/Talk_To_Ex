@@ -49,12 +49,15 @@ def provision(
     otherwise.
     """
     owner = session.get(User, persona.user_id)
-    if owner is None or owner.subscription_status != "active":
+    if not settings.demo_mode and (owner is None or owner.subscription_status != "active"):
         raise SubscriptionRequired()
 
     if auto_buy_tollfree:
         e164 = _buy_tollfree(twilio)
         mode = "tollfree"
+    elif settings.demo_mode:
+        e164 = settings.twilio_from_number or "+15555550100"
+        mode = "trial"
     else:
         e164 = require("twilio_from_number")
         mode = "trial"

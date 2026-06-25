@@ -199,6 +199,23 @@ def apply_correction(
     """
     arts = load(persona_id, session)
 
+    # Demo mode: keyless — record the correction text + bump the counter, no Claude.
+    if client is None and settings.demo_mode:
+        pj = dict(arts.persona_json or {})
+        pj["corrections"] = list(pj.get("corrections") or []) + [instruction]
+        meta = dict(arts.meta or {})
+        meta["corrections_count"] = int(meta.get("corrections_count", 0)) + 1
+        updated = PersonaArtifacts(
+            persona_md=arts.persona_md,
+            memories_md=arts.memories_md,
+            meta=meta,
+            persona_json=pj,
+        )
+        save_artifacts(persona_id, updated, session)
+        session.add(Correction(persona_id=persona_id, instruction=instruction))
+        session.commit()
+        return updated
+
     if client is None:
         client = _default_client()
 

@@ -48,6 +48,11 @@ class Settings(BaseSettings):
     # owner must have an active subscription to keep getting replies.
     free_message_limit: int = 200
 
+    # Demo mode (spec: localhost dry-run) — bypass the paid externals (Claude
+    # distillation, Stripe gate, Twilio number) with local fallbacks so the whole
+    # wizard is clickable end-to-end with NO external accounts. OFF in production.
+    demo_mode: bool = False
+
     # Ops / safety
     cloudflare_tunnel_token: str = ""
     operator_alert_email: str = ""

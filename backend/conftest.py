@@ -14,6 +14,9 @@ os.environ.setdefault("STRIPE_SECRET_KEY", "sk_test_x")
 os.environ.setdefault("STRIPE_WEBHOOK_SECRET", "whsec_test")
 os.environ.setdefault("STRIPE_PRICE_ID", "price_test")
 os.environ.setdefault("DATABASE_URL", "sqlite:///./_test_ttx.db")
+# Shield the suite from a DEMO_MODE=true in backend/.env (env vars outrank .env):
+# tests run in production semantics; demo branches are exercised via monkeypatch.
+os.environ.setdefault("DEMO_MODE", "false")
 
 
 # --- Binary parser fixtures ---------------------------------------------------

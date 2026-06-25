@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
 from ..auth.deps import get_current_user
+from ..config import settings
 from ..db import User
 from . import stripe_service
 
@@ -17,6 +18,9 @@ class CheckoutResponse(BaseModel):
 
 @router.post("/checkout", response_model=CheckoutResponse)
 def checkout(user: User = Depends(get_current_user)) -> CheckoutResponse:
+    # Demo mode: skip Stripe entirely — send the user straight into the wizard.
+    if settings.demo_mode:
+        return CheckoutResponse(url="/intake")
     try:
         url = stripe_service.create_checkout(user)
     except RuntimeError as exc:

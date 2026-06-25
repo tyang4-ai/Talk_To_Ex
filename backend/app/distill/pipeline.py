@@ -170,8 +170,14 @@ def distill(
     """Distill a transcript + intake into :class:`PersonaArtifacts`.
 
     ``client`` is any object exposing ``messages.create(...)`` (the anthropic
-    SDK shape). When ``None``, the real client is built lazily.
+    SDK shape). When ``None``, the real client is built lazily — unless
+    ``settings.demo_mode`` is on, in which case a keyless local heuristic builds
+    a valid persona (no Claude). An injected client always wins (tests).
     """
+    if client is None and settings.demo_mode:
+        from .fallback import distill_local
+
+        return distill_local(list(transcript), intake)
     if client is None:
         client = _default_client()
 

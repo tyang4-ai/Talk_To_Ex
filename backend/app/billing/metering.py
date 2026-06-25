@@ -34,7 +34,9 @@ def inbound_count(session: Session, persona_id: int) -> int:
 
 
 def subscription_active(session: Session, persona_id: int) -> bool:
-    """Whether the persona's owning user has an active subscription."""
+    """Whether the persona's owning user has an active subscription (demo: always)."""
+    if settings.demo_mode:
+        return True
     persona = session.get(Persona, persona_id)
     if persona is None:
         return False

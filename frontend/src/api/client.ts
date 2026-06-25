@@ -71,8 +71,16 @@ export function errorMessage(err: unknown, fallback = "Something went wrong."): 
 export type SubscriptionStatus = "inactive" | "active" | "past_due" | "canceled";
 export type PersonaStatus = "draft" | "active" | "dormant";
 
+/** Backend returns access_token (+ flat user fields); we expose it as `token`. */
 export interface AuthResponse {
   token: string;
+}
+interface RawAuthResponse {
+  access_token: string;
+  token_type: string;
+  user_id: number;
+  email: string;
+  subscription_status: SubscriptionStatus;
 }
 
 export interface MeResponse {
@@ -157,14 +165,14 @@ export interface CheckoutResponse {
 // ───────────────────────────── API functions ─────────────────────────────
 
 export const api = {
-  // Auth
+  // Auth — backend returns `access_token`; map it to `token`.
   async register(email: string, password: string): Promise<AuthResponse> {
-    const { data } = await http.post<AuthResponse>("/auth/register", { email, password });
-    return data;
+    const { data } = await http.post<RawAuthResponse>("/auth/register", { email, password });
+    return { token: data.access_token };
   },
   async login(email: string, password: string): Promise<AuthResponse> {
-    const { data } = await http.post<AuthResponse>("/auth/login", { email, password });
-    return data;
+    const { data } = await http.post<RawAuthResponse>("/auth/login", { email, password });
+    return { token: data.access_token };
   },
   async me(): Promise<MeResponse> {
     const { data } = await http.get<MeResponse>("/auth/me");
@@ -217,9 +225,12 @@ export const api = {
     return data;
   },
   async uploadPlaintext(id: number, text: string, exName: string): Promise<UploadResult> {
-    const { data } = await http.post<UploadResult>(`/personas/${id}/uploads`, {
-      text,
-      ex_name: exName,
+    // The upload route is multipart-only — send the pasted text as a .txt file.
+    const form = new FormData();
+    form.append("file", new File([text], "pasted.txt", { type: "text/plain" }));
+    form.append("target", exName);
+    const { data } = await http.post<UploadResult>(`/personas/${id}/uploads`, form, {
+      headers: { "Content-Type": "multipart/form-data" },
     });
     return data;
   },
@@ -228,8 +239,15 @@ export const api = {
     return data;
   },
   async activate(id: number): Promise<ActivateResponse> {
-    const { data } = await http.post<ActivateResponse>(`/personas/${id}/activate`, {});
-    return data;
+    // Backend returns flat { ok, e164, mode }; reshape to { status, number }.
+    const { data } = await http.post<{ e164: string; mode: "trial" | "tollfree"; status?: PersonaStatus }>(
+      `/personas/${id}/activate`,
+      {},
+    );
+    return {
+      status: data.status ?? "active",
+      number: { e164: data.e164, mode: data.mode },
+    };
   },
   async addCorrection(id: number, instruction: string): Promise<{ applied: boolean }> {
     const { data } = await http.post<{ applied: boolean }>(`/personas/${id}/corrections`, {
@@ -238,7 +256,10 @@ export const api = {
     return data;
   },
   async preview(id: number, body: string): Promise<PreviewResponse> {
-    const { data } = await http.post<PreviewResponse>(`/personas/${id}/preview`, { body });
+    // Backend expects `message`, not `body`.
+    const { data } = await http.post<PreviewResponse>(`/personas/${id}/preview`, {
+      message: body,
+    });
     return data;
   },
   async setKillSwitch(id: number, enabled: boolean): Promise<{ killed: boolean }> {
