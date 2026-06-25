@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import WizardShell from "../components/WizardShell";
@@ -10,6 +10,10 @@ import { TextAreaField } from "../components/Field";
 import { importGuides, type PlatformGuide } from "../lib/importGuides";
 import { api, errorMessage, type UploadResult } from "../api/client";
 import { getDraftPersonaId } from "../lib/draft";
+
+// One universal dropbox accepts every supported export type — the platform tabs
+// are just the how-to guides; uploads accumulate regardless of which is selected.
+const ALL_ACCEPT = ".zip,.txt,.json,.xml,.csv,.db,.pdf,.html,.htm,.mbox,.eml";
 
 export default function Import() {
   const navigate = useNavigate();
@@ -28,6 +32,21 @@ export default function Import() {
   }, [personaId, navigate]);
 
   const active = importGuides.find((g) => g.id === activeId)!;
+
+  // Let the horizontal platform strip scroll left/right with a vertical mouse
+  // wheel when you hover it (it only hijacks the wheel while there's overflow).
+  const tabsRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = tabsRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      if (e.deltaY === 0 || el.scrollWidth <= el.clientWidth) return;
+      e.preventDefault();
+      el.scrollLeft += e.deltaY;
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, []);
   const totalMessages = uploads.reduce((sum, u) => sum + u.message_count, 0);
 
   async function handleFiles(files: File[]) {
@@ -81,8 +100,13 @@ export default function Import() {
       title="Bring the chats"
       subtitle="Pick where you talked. We auto-detect the format — you never choose one."
     >
-      {/* Platform tabs (py-2 so the chip rings aren't clipped by overflow-x) */}
-      <div className="-mx-1 mb-4 flex gap-2 overflow-x-auto px-1 py-2">
+      {/* Platform tabs — pick one to see its export guide. Scroll with the wheel
+          (py-2 so the chip rings aren't clipped by overflow-x). */}
+      <p className="mb-1.5 text-sm text-muted">Need help exporting? Pick your app:</p>
+      <div
+        ref={tabsRef}
+        className="-mx-1 mb-4 flex gap-2 overflow-x-auto px-1 py-2 [scrollbar-width:thin]"
+      >
         {importGuides.map((g) => (
           <button
             key={g.id}
@@ -121,14 +145,14 @@ export default function Import() {
         </motion.div>
       </AnimatePresence>
 
-      {/* Dropzone */}
+      {/* One universal dropbox — auto-detects any format, accumulates across tabs */}
       <div className="mt-4">
         <Dropzone
           onFiles={handleFiles}
           busy={busy}
           progress={progress}
-          accept={active.accept}
-          hint={active.hint}
+          accept={ALL_ACCEPT}
+          hint="Any app, any format — WhatsApp · Instagram · Discord · Telegram · iMessage · email · … drop as many as you like"
         />
       </div>
 
