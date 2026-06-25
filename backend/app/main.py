@@ -7,12 +7,24 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
+from .config import settings
 from .db import init_db
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    # Register the fine-tune job handler so a worker process can pick up jobs
+    # (spec §23). The real training step is host-only; see ops/finetune/.
+    if settings.finetune_enabled:
+        try:
+            from .finetune import pipeline
+
+            pipeline.register_handler()
+        except Exception as exc:  # noqa: BLE001 — never block startup on this
+            logging.getLogger("talk_to_ex").warning(
+                "finetune handler not registered: %s", exc
+            )
     yield
 
 

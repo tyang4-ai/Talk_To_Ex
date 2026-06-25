@@ -92,15 +92,19 @@ def _load_persona_json(persona: Persona) -> dict:
 
 
 def _persona_model(persona: Persona) -> Optional[str]:
-    """The Ollama model routed to this persona at distill time (by the dominant
-    language of its source log), or ``None`` to fall back to ``settings.ollama_model``.
-    Stored by the distill route under ``meta_json["llm_model"]`` (see model_router)."""
+    """The Ollama model this persona answers on, or ``None`` to fall back to
+    ``settings.ollama_model``. Prefers a fine-tuned per-persona adapter model
+    (``meta_json["adapter_model"]``, spec §23) once trained; otherwise the
+    language-routed base model (``meta_json["llm_model"]``, see model_router)."""
     try:
         meta = json.loads(persona.meta_json or "{}")
     except Exception:
         return None
-    m = meta.get("llm_model")
-    return m if isinstance(m, str) and m else None
+    for key in ("adapter_model", "llm_model"):
+        m = meta.get(key)
+        if isinstance(m, str) and m:
+            return m
+    return None
 
 
 def _load_style_overlay(persona: Persona) -> dict:

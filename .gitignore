@@ -19,6 +19,7 @@ __pycache__/
 _test_ttx.db
 uploads/
 exes/
+adapters/
 
 # node / build
 node_modules/

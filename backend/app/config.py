@@ -39,6 +39,11 @@ class Settings(BaseSettings):
     ollama_model_en: str = "gemma3:12b"
     model_route_cjk_threshold: float = 0.5  # CJK char fraction >= this -> zh (Qwen)
 
+    # Per-persona fine-tuning (spec §23). Off → personas use the prompt-only path.
+    finetune_enabled: bool = True
+    finetune_trainer: str = "unsloth"  # unsloth | llama-factory (host-only)
+    train_ollama_host: str = "http://localhost:11434"  # where derived models are created (the 4090)
+
     # Freemium metering (spec §25): N free inbound messages per persona, then the
     # owner must have an active subscription to keep getting replies.
     free_message_limit: int = 200
