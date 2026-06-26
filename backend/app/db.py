@@ -129,8 +129,50 @@ engine = create_engine(
 )
 
 
+def _literal_default(col) -> Optional[str]:
+    """A SQL literal for a column's simple scalar Python default, else None."""
+    d = getattr(col, "default", None)
+    if d is None or not getattr(d, "is_scalar", False):
+        return None
+    val = d.arg
+    if callable(val):
+        return None
+    if isinstance(val, bool):
+        return "1" if val else "0"
+    if isinstance(val, (int, float)):
+        return str(val)
+    if isinstance(val, str):
+        return "'" + val.replace("'", "''") + "'"
+    return None
+
+
+def _migrate_add_missing_columns(eng) -> None:
+    """Lightweight, idempotent forward-migration (we have no Alembic): for each
+    existing table, ALTER TABLE ADD COLUMN any model column that's missing. Keeps
+    a dev DB created before a model gained a column from 500ing at query time."""
+    from sqlalchemy import inspect, text
+
+    insp = inspect(eng)
+    existing_tables = set(insp.get_table_names())
+    with eng.begin() as conn:
+        for table in SQLModel.metadata.sorted_tables:
+            if table.name not in existing_tables:
+                continue  # create_all already made brand-new tables in full
+            have = {c["name"] for c in insp.get_columns(table.name)}
+            for col in table.columns:
+                if col.name in have:
+                    continue
+                coltype = col.type.compile(dialect=eng.dialect)
+                ddl = f'ALTER TABLE "{table.name}" ADD COLUMN "{col.name}" {coltype}'
+                default = _literal_default(col)
+                if default is not None:
+                    ddl += f" DEFAULT {default}"
+                conn.execute(text(ddl))
+
+
 def init_db() -> None:
     SQLModel.metadata.create_all(engine)
+    _migrate_add_missing_columns(engine)
 
 
 def get_session():
