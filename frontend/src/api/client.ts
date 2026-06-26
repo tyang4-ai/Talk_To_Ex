@@ -166,8 +166,12 @@ export interface CheckoutResponse {
 
 export const api = {
   // Auth — backend returns `access_token`; map it to `token`.
-  async register(email: string, password: string): Promise<AuthResponse> {
-    const { data } = await http.post<RawAuthResponse>("/auth/register", { email, password });
+  async register(email: string, password: string, phone?: string): Promise<AuthResponse> {
+    const { data } = await http.post<RawAuthResponse>("/auth/register", {
+      email,
+      password,
+      phone,
+    });
     return { token: data.access_token };
   },
   async login(email: string, password: string): Promise<AuthResponse> {

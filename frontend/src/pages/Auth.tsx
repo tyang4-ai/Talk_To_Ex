@@ -16,6 +16,7 @@ export default function Auth() {
   const [mode, setMode] = useState<Mode>("register");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,7 +27,7 @@ export default function Auth() {
     try {
       const res =
         mode === "register"
-          ? await api.register(email.trim(), password)
+          ? await api.register(email.trim(), password, phone.trim())
           : await api.login(email.trim(), password);
       setToken(res.token);
       navigate(from, { replace: true });
@@ -70,6 +71,23 @@ export default function Auth() {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="At least 8 characters"
           />
+          {mode === "register" && (
+            <div>
+              <Field
+                label="Your phone number"
+                name="phone"
+                type="tel"
+                autoComplete="tel"
+                required
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+1 (555) 123-4567"
+              />
+              <p className="mt-1 text-xs text-muted">
+                Where your ex reaches out first, once they're ready. Stays on your box.
+              </p>
+            </div>
+          )}
           {error && (
             <p className="alert-error">{error}</p>
           )}

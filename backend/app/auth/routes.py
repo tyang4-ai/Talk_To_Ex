@@ -1,6 +1,8 @@
 """Auth API: register + login, both returning a signed JWT."""
 from __future__ import annotations
 
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlmodel import Session, select
@@ -15,6 +17,7 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 class Credentials(BaseModel):
     email: str
     password: str
+    phone: Optional[str] = None  # register only — where the ex texts them first
 
 
 class TokenResponse(BaseModel):
@@ -43,7 +46,8 @@ def register(creds: Credentials, session: Session = Depends(get_session)) -> Tok
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="Email already registered"
         )
-    user = User(email=email, pw_hash=hash_password(creds.password))
+    phone = (creds.phone or "").strip() or None
+    user = User(email=email, pw_hash=hash_password(creds.password), phone_e164=phone)
     session.add(user)
     session.commit()
     session.refresh(user)

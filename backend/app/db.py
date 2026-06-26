@@ -15,6 +15,7 @@ class User(SQLModel, table=True):
     stripe_customer_id: Optional[str] = None
     subscription_status: str = "inactive"  # inactive|active|past_due|canceled
     subscription_id: Optional[str] = None
+    phone_e164: Optional[str] = None  # where the persona texts them first (the reveal)
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
