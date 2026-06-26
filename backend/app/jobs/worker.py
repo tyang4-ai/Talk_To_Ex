@@ -30,6 +30,25 @@ def register(kind: str, handler: Handler) -> None:
     DISPATCH[kind] = handler
 
 
+def run_job(session: Session, job: Job, dispatch: Optional[Dict[str, Handler]] = None) -> Job:
+    """Run ONE specific job through its handler (flip to training, dispatch, mark
+    ready/failed). Unlike ``run_once`` this targets a job you already hold (e.g. a
+    BackgroundTask processing the job it just enqueued) rather than claiming the
+    oldest queued one. Returns the job in its terminal state."""
+    table = DISPATCH if dispatch is None else dispatch
+    queue.mark(session, job, "training")
+
+    handler = table.get(job.kind)
+    if handler is None:
+        return queue.mark(session, job, "failed", error=f"no handler for kind {job.kind!r}")
+
+    try:
+        result = handler(session, job) or {}
+    except Exception as exc:  # noqa: BLE001 — record the failure, never crash the loop
+        return queue.mark(session, job, "failed", error=str(exc))
+    return queue.mark(session, job, "ready", **result)
+
+
 def run_once(session: Session, dispatch: Optional[Dict[str, Handler]] = None) -> Optional[Job]:
     """Process one queued job, if any. Returns the job (now ready/failed) or None."""
     table = DISPATCH if dispatch is None else dispatch

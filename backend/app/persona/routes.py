@@ -3,11 +3,12 @@ plus corrections. All routes require auth and enforce ownership."""
 from __future__ import annotations
 
 import json
+import logging
 import re
 from datetime import datetime
 from typing import Any, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlmodel import Session, select
 
@@ -30,22 +31,18 @@ from ..db import (
     Upload,
     User,
     Version,
+    engine,
     get_session,
 )
-from ..distill.pipeline import distill
 from ..ingestion.upload import UPLOADS_ROOT, load_normalized
+from ..jobs import queue, worker
+from ..messaging import reveal
 from ..persona import store
+from .build import _language_for_model, register_build_handler, run_build
 
 router = APIRouter(prefix="/api/personas", tags=["personas"])
 
-
-def _language_for_model(model: str) -> str:
-    """Best-effort language label for an explicitly-chosen model (spec §26)."""
-    if model == settings.ollama_model_zh:
-        return "zh"
-    if model == settings.ollama_model_en:
-        return "en"
-    return "manual"
+log = logging.getLogger("talk_to_ex.persona")
 
 
 def _slugify(name: str) -> str:
@@ -178,48 +175,138 @@ def distill_persona(
             "llm_model_source": meta.get("llm_model_source"),
         }
 
-    uploads = session.exec(select(Upload).where(Upload.persona_id == persona_id)).all()
-    if not uploads:
+    if not session.exec(select(Upload).where(Upload.persona_id == persona_id)).first():
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "no uploads to distill")
 
-    transcript: list[dict] = []
-    for u in uploads:
-        transcript.extend(load_normalized(u))
+    # The distillation itself (load → Claude → pick model → persist) lives in
+    # build.run_build so the async build job and this synchronous route share it.
+    summary = run_build(session, persona_id)
+    return {"ok": True, **summary}
 
-    persona_meta = json.loads(persona.meta_json or "{}")
-    intake = persona_meta.get("intake", {})
-    override = persona_meta.get("llm_model_override")
 
-    if not settings.demo_mode:
-        claude_budget.consume(session)  # reserve a Claude call or 503 (global ceiling)
-    arts = distill(transcript, intake)  # real Claude call at runtime (needs key)
-    arts.meta["intake"] = intake  # keep intake so re-distill stays possible
+# --- async build + the "reveal" ------------------------------------------------
+# The intended flow: set up & close-and-forget → the build runs in the background
+# → when it's done the persona texts the friend FIRST (the opener), in-voice.
 
-    # Hybrid routing (spec §22/§26): a user override wins; otherwise pick the
-    # local model from the log's dominant language. Either way it's pinned on the
-    # persona so the live engine answers on the best-fit model.
-    if override:
-        llm_model = override
-        llm_language = _language_for_model(override)
-        arts.meta["llm_model_override"] = override  # survive re-distill
-        source = "manual"
-    else:
-        llm_language, llm_model = pick_model(transcript)
-        source = "auto"
-    arts.meta["llm_language"] = llm_language
-    arts.meta["llm_model"] = llm_model
-    arts.meta["llm_model_source"] = source
+_BUILDING = {"queued", "training"}
 
-    store.save_artifacts(persona_id, arts, session)
-    return {
-        "ok": True,
-        "name": persona.name,
-        "message_count": len(transcript),
-        "layers": list(arts.persona_json.keys()),
-        "llm_language": llm_language,
-        "llm_model": llm_model,
-        "llm_model_source": source,
-    }
+
+def _latest_build_job(session: Session, persona_id: int) -> Optional[Job]:
+    return session.exec(
+        select(Job)
+        .where(Job.persona_id == persona_id, Job.kind.in_(("build", "finetune")))
+        .order_by(Job.created_at.desc(), Job.id.desc())
+    ).first()
+
+
+def _build_and_reveal(persona_id: int, job_id: int) -> None:
+    """Runs AFTER the /build response (FastAPI BackgroundTask): distill the persona
+    out-of-request, then — on success — have the ex text the friend first. Opens its
+    own DB session because the request's session is already closed."""
+    with Session(engine) as session:
+        job = queue.get(session, job_id)
+        if job is None:
+            return
+        worker.run_job(session, job)  # marks training → ready/failed
+        if job.status != "ready":
+            log.warning("build job %s failed: %s", job_id, job.error)
+            return
+        try:
+            sent = reveal.go_live(session, persona_id)  # the ex texts them first
+            log.info("persona %s build done; opener sent=%s", persona_id, sent)
+        except Exception:  # noqa: BLE001 — a failed reveal must not crash the worker
+            log.exception("reveal failed for persona %s", persona_id)
+
+
+def _build_state(persona: Persona, job: Optional[Job]) -> str:
+    """Friendly status for the dashboard/poller."""
+    if job is not None and job.status in _BUILDING:
+        return "contemplating"          # "he's thinking about his wrongdoings…"
+    if job is not None and job.status == "failed":
+        return "failed"
+    if persona.status == "active":
+        return "revealed"               # he texted you
+    if persona.persona_md_enc:
+        return "ready"                  # built, opener not (yet) sent
+    return "draft"                      # nothing built yet
+
+
+class BuildOut(BaseModel):
+    persona_id: int
+    name: str
+    state: str                          # draft|contemplating|ready|revealed|failed
+    job_id: Optional[int] = None
+    job_status: Optional[str] = None
+    revealed: bool = False
+    has_phone: bool = False
+    error: Optional[str] = None
+
+
+def _build_payload(session: Session, persona: Persona) -> BuildOut:
+    job = _latest_build_job(session, persona.id)
+    owner = session.get(User, persona.user_id)
+    meta = json.loads(persona.meta_json or "{}")
+    return BuildOut(
+        persona_id=persona.id,
+        name=persona.name,
+        state=_build_state(persona, job),
+        job_id=job.id if job else None,
+        job_status=job.status if job else None,
+        revealed=persona.status == "active",
+        has_phone=bool(meta.get("peer_e164") or (owner and owner.phone_e164)),
+        error=job.error if (job and job.status == "failed") else None,
+    )
+
+
+@router.post("/{persona_id}/build", response_model=BuildOut)
+def build_persona(
+    persona_id: int,
+    background: BackgroundTasks,
+    user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+) -> BuildOut:
+    """Kick off the async build (set up & forget). Returns immediately; the persona
+    texts the friend first when the build finishes. Idempotent: a build already in
+    flight is not duplicated."""
+    persona = _owned(session, user, persona_id)
+
+    if not session.exec(select(Upload).where(Upload.persona_id == persona_id)).first():
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "upload a chat export first")
+
+    existing = _latest_build_job(session, persona_id)
+    if existing is not None and existing.status in _BUILDING:
+        return _build_payload(session, persona)  # already brewing — don't double-spend
+
+    # Record where the ex will text them (captured at signup) on the persona, and
+    # make sure it has a number to text FROM.
+    meta = json.loads(persona.meta_json or "{}")
+    if user.phone_e164:
+        meta["peer_e164"] = user.phone_e164
+    if not session.exec(select(Number).where(Number.persona_id == persona_id)).first():
+        try:
+            provision(session, persona)
+        except Exception:  # noqa: BLE001 — build can proceed; reveal no-ops w/o a number
+            log.warning("number provision failed for persona %s", persona_id)
+    persona.status = "building"
+    persona.meta_json = json.dumps(meta, ensure_ascii=False)
+    persona.updated_at = datetime.utcnow()
+    session.add(persona)
+    session.commit()
+
+    job = queue.enqueue(session, persona_id, kind="build")
+    background.add_task(_build_and_reveal, persona_id, job.id)
+    return _build_payload(session, persona)
+
+
+@router.get("/{persona_id}/status", response_model=BuildOut)
+def persona_status(
+    persona_id: int,
+    user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+) -> BuildOut:
+    """Poll the build/reveal state — drives the 'he's contemplating…' screen."""
+    persona = _owned(session, user, persona_id)
+    return _build_payload(session, persona)
 
 
 class ModelIn(BaseModel):

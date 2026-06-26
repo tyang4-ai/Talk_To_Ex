@@ -87,7 +87,7 @@ def test_persona_lifecycle(client, engine, monkeypatch, tmp_path):
         meta={},
         persona_json=PersonaJSON(name="Xiaomei").model_dump(),
     )
-    monkeypatch.setattr("app.persona.routes.distill", lambda transcript, intake: arts)
+    monkeypatch.setattr("app.persona.build.distill", lambda transcript, intake: arts)
     d = client.post(f"/api/personas/{pid}/distill", headers=headers)
     assert d.status_code == 200, d.text
 

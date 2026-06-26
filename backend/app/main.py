@@ -30,6 +30,15 @@ class SPAStaticFiles(StaticFiles):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    # Register the distillation "build" job handler — it runs the async build that
+    # precedes the reveal (the ex texts the friend first). Needs no GPU, so it's
+    # always on (unlike the host-only fine-tune handler below).
+    try:
+        from .persona.build import register_build_handler
+
+        register_build_handler()
+    except Exception as exc:  # noqa: BLE001 — never block startup on this
+        logging.getLogger("talk_to_ex").warning("build handler not registered: %s", exc)
     # Register the fine-tune job handler so a worker process can pick up jobs
     # (spec §23). The real training step is host-only; see ops/finetune/.
     if settings.finetune_enabled:

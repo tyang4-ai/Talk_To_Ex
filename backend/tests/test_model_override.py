@@ -82,7 +82,7 @@ def test_model_override_lifecycle(client, monkeypatch, tmp_path):
         persona_md="# p", memories_md="# m", meta={},
         persona_json=PersonaJSON(name="Xiaomei").model_dump(),
     )
-    monkeypatch.setattr("app.persona.routes.distill", lambda transcript, intake: arts)
+    monkeypatch.setattr("app.persona.build.distill", lambda transcript, intake: arts)
 
     # 1) auto-detect: Chinese-dominant log -> Qwen
     d = client.post(f"/api/personas/{pid}/distill", headers=headers)
