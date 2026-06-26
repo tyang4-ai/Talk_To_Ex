@@ -139,6 +139,22 @@ def _respond(persona_id: int, peer_e164: str, our_number: str, body: str) -> Non
         log.exception("reply background task failed (peer=%s)", peer_e164)
 
 
+def _signature_ok(request: Request, params: dict, signature: str) -> bool:
+    """Validate the Twilio signature, tolerant of the reverse proxy.
+
+    Twilio signs the PUBLIC https URL it POSTs to, but behind the Cloudflare
+    tunnel ``request.url`` is the internal ``http://localhost`` one, so a naive
+    check rejects every real message. Accept a match against either the URL the
+    app computed (correct when uvicorn runs with ``--proxy-headers``) or the
+    configured public ``app_url`` + path.
+    """
+    validator = RequestValidator(settings.twilio_auth_token)
+    candidates = [str(request.url)]
+    if settings.app_url:
+        candidates.append(settings.app_url.rstrip("/") + request.url.path)
+    return any(validator.validate(u, params, signature) for u in candidates)
+
+
 @router.post("/sms")
 async def inbound_sms(request: Request) -> Response:
     """Twilio inbound-SMS webhook. Validates, gates, and acks with empty TwiML."""
@@ -146,8 +162,7 @@ async def inbound_sms(request: Request) -> Response:
     form = await request.form()
     params = {k: str(v) for k, v in form.items()}
 
-    validator = RequestValidator(settings.twilio_auth_token)
-    if not validator.validate(str(request.url), params, raw_signature):
+    if not _signature_ok(request, params, raw_signature):
         return Response(status_code=403, content="invalid signature")
 
     sender_e164 = params.get("From", "")
