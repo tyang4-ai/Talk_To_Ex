@@ -32,6 +32,8 @@ LORA_TARGETS = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", 
 
 
 def hf_repo_for(tag: str) -> str:
+    if "/" in tag:  # already an HF repo id (e.g. a smoke-test base)
+        return tag
     repo = HF_REPO.get(tag) or (HF_REPO.get(tag.split("-q", 1)[0]) if "-q" in tag else None)
     if not repo:
         sys.exit(f"no HF base mapped for tag {tag!r}")
@@ -131,10 +133,16 @@ def main() -> None:
     print(f"[train] adapter saved -> {adapter_dir}", flush=True)
 
     # LoRA -> GGUF adapter (pure-python llama.cpp converter; no build).
+    # convert_lora_to_gguf.py's --base wants a LOCAL base-model dir, not a repo id;
+    # resolve the already-cached snapshot path (instant — downloaded during training).
+    from huggingface_hub import snapshot_download
+
+    base_dir = snapshot_download(repo, token=token)
     gguf_out = os.path.join(args.out, f"persona-{args.persona_id}.gguf")
     conv = os.path.join(args.llama_cpp, "convert_lora_to_gguf.py")
-    cmd = [sys.executable, conv, adapter_dir, "--base", repo, "--outfile", gguf_out, "--outtype", "f16"]
-    print(f"[convert] {' '.join(cmd)}", flush=True)
+    cmd = [sys.executable, conv, adapter_dir, "--base", base_dir,
+           "--outfile", gguf_out, "--outtype", "f16"]
+    print(f"[convert] base_dir={base_dir}", flush=True)
     subprocess.run(cmd, check=True)
     print(f"GGUF_READY {gguf_out}", flush=True)
 
