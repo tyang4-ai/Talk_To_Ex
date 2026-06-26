@@ -16,9 +16,23 @@ from ..billing.number_service import provision
 from ..config import settings
 from ..convo.engine import reply as engine_reply
 from ..convo.model_router import pick_model
-from ..db import Number, Persona, Upload, User, get_session
+from ..db import (
+    Conversation,
+    Correction,
+    Job,
+    MemoryChunk,
+    Message,
+    Number,
+    Persona,
+    SafetyEvent,
+    StyleTuning,
+    Upload,
+    User,
+    Version,
+    get_session,
+)
 from ..distill.pipeline import distill
-from ..ingestion.upload import load_normalized
+from ..ingestion.upload import UPLOADS_ROOT, load_normalized
 from ..persona import store
 
 router = APIRouter(prefix="/api/personas", tags=["personas"])
@@ -279,6 +293,52 @@ def kill_persona(
     session.add(persona)
     session.commit()
     return {"ok": True, "killed": body.enabled}
+
+
+def _purge_persona(session: Session, persona: Persona) -> None:
+    """Delete a persona and EVERYTHING tied to it — DB rows for every related
+    table plus the encrypted chat files on disk. This is the "re-break-up": the
+    ex's data genuinely leaves the box.
+    """
+    pid = persona.id
+    conv_ids = session.exec(
+        select(Conversation.id).where(Conversation.persona_id == pid)
+    ).all()
+    if conv_ids:
+        for msg in session.exec(
+            select(Message).where(Message.conversation_id.in_(conv_ids))
+        ).all():
+            session.delete(msg)
+        for ev in session.exec(
+            select(SafetyEvent).where(SafetyEvent.conversation_id.in_(conv_ids))
+        ).all():
+            session.delete(ev)
+    # persona-scoped tables (StyleTuning first — it references conversations)
+    for model in (StyleTuning, Conversation, Number, MemoryChunk, Correction, Version, Job, Upload):
+        for row in session.exec(select(model).where(model.persona_id == pid)).all():
+            session.delete(row)
+    session.delete(persona)
+    session.commit()
+
+    # wipe the encrypted raw/normalized uploads from disk (the sensitive part).
+    import shutil
+
+    pdir = UPLOADS_ROOT / str(pid)
+    if pdir.exists():
+        shutil.rmtree(pdir, ignore_errors=True)
+
+
+@router.delete("/{persona_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_persona(
+    persona_id: int,
+    user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+) -> None:
+    """Permanently delete a persona and all of its data (the "re-break-up").
+    Irreversible; the caller (portal) confirms first. Releasing the Twilio number
+    is a TODO for when live SMS is wired."""
+    persona = _owned(session, user, persona_id)
+    _purge_persona(session, persona)
 
 
 class CorrectionIn(BaseModel):

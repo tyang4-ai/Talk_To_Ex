@@ -273,4 +273,8 @@ export const api = {
     });
     return data;
   },
+  /** DELETE /api/personas/{id} — the "re-break-up": wipes the ex + all their data. */
+  async deletePersona(id: number): Promise<void> {
+    await http.delete(`/personas/${id}`);
+  },
 };

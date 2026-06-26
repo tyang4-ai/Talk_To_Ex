@@ -44,6 +44,8 @@ export default function Dashboard() {
   const [correctionMsg, setCorrectionMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [savingCorrection, setSavingCorrection] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Load every persona this user owns; pick the selected ex (the persisted
   // draft id, falling back to the first one) so the detail cards have a target.
@@ -71,6 +73,7 @@ export default function Dashboard() {
     setDetailLoading(true);
     setCorrection("");
     setCorrectionMsg(null);
+    setConfirmingDelete(false);
     api
       .getPersona(selectedId)
       .then((detail) => {
@@ -102,6 +105,30 @@ export default function Dashboard() {
     } catch (err) {
       setKilled(!next); // revert on failure
       setError(errorMessage(err, "Couldn't toggle the kill-switch."));
+    }
+  }
+
+  // "Re-break-up": permanently delete the selected ex + all their data.
+  async function breakUp() {
+    if (selectedId === null) return;
+    setDeleting(true);
+    setError(null);
+    try {
+      await api.deletePersona(selectedId);
+      const remaining = personas.filter((p) => p.id !== selectedId);
+      setPersonas(remaining);
+      setConfirmingDelete(false);
+      if (remaining.length) {
+        setDraftPersonaId(remaining[0].id);
+        setSelectedId(remaining[0].id);
+      } else {
+        clearDraftPersonaId();
+        setSelectedId(null);
+      }
+    } catch (err) {
+      setError(errorMessage(err, "Couldn't break up — try again."));
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -298,6 +325,49 @@ export default function Dashboard() {
                   <p className="mt-3 alert-error">
                     Replies are off. Flip the switch back to bring them online.
                   </p>
+                )}
+              </Card>
+
+              {/* Break up — permanent delete */}
+              <Card>
+                <h3 className="text-display-md font-bold text-ink">Break up — for good</h3>
+                <p className="mt-1 text-sm text-muted">
+                  Delete {persona?.name ?? "this ex"} and wipe every message, memory, and
+                  upload from your box. There's no undo.
+                </p>
+                {!confirmingDelete ? (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmingDelete(true)}
+                    className="mt-4 rounded-pill border border-error px-5 py-2.5 text-sm font-semibold text-error transition hover:bg-error hover:text-white"
+                  >
+                    Break up 💔
+                  </button>
+                ) : (
+                  <div className="mt-4 space-y-3 rounded-md border border-error/40 bg-surfacesoft p-4">
+                    <p className="text-sm font-medium text-ink">
+                      Really break up with {persona?.name ?? "them"}? This erases everything
+                      — for good.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={breakUp}
+                        disabled={deleting}
+                        className="rounded-pill bg-error px-5 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:opacity-60"
+                      >
+                        {deleting ? "Breaking up…" : "Yes, break up for good"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmingDelete(false)}
+                        disabled={deleting}
+                        className="rounded-pill border border-hairline px-5 py-2.5 text-sm font-semibold text-ink transition hover:bg-surfacestrong disabled:opacity-60"
+                      >
+                        Keep them
+                      </button>
+                    </div>
+                  </div>
                 )}
               </Card>
             </>
