@@ -1,0 +1,20 @@
+# Per-persona QLoRA fine-tune stack — the 4090 TRAINER venv only (Python 3.12).
+# Kept OUT of backend/.venv (the FastAPI service must stay torch-free) and out of
+# the default Python 3.14 (no torch/bitsandbytes wheels for cp314).
+#
+# torch is installed separately from the CUDA 12.4 wheel index — see
+# ops/finetune/install-train-env.ps1 (it ships its own CUDA runtime; no nvcc needed).
+#
+# These are coherent STARTING pins (transformers/trl/peft skew is the #1 runtime
+# breakage). After the first successful train, freeze the exact set:
+#     uv pip freeze --python .venv-train > backend/requirements-train.lock
+# and prefer the lock thereafter. Native Windows, NO WSL, NO triton/xformers/flash-attn.
+transformers==4.48.0
+peft==0.14.0
+trl==0.13.0
+accelerate==1.3.0
+datasets==3.2.0
+bitsandbytes==0.45.0
+sentencepiece==0.2.0
+protobuf==5.29.3
+huggingface_hub>=0.27,<1.0
