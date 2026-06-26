@@ -37,7 +37,7 @@ from typing import List, Optional
 from dateutil import parser as dateparser
 from ftfy import fix_text
 
-from .base import NormalizedMessage, NormalizedTranscript
+from .base import NormalizedMessage, NormalizedTranscript, reject_zip_bomb
 
 # DiscordChatExporter emits these message kinds; only real chat lines carry a body
 # worth modelling. Everything else (RecipientAdd, Call, ChannelPinnedMessage, ...)
@@ -74,6 +74,7 @@ def _iter_export_files(path: str) -> List[str]:
     if os.path.isfile(path) and zipfile.is_zipfile(path):
         tmp = tempfile.mkdtemp(prefix="discord_export_")
         with zipfile.ZipFile(path) as zf:
+            reject_zip_bomb(zf)
             zf.extractall(tmp)
         root = tmp
     elif os.path.isdir(path):

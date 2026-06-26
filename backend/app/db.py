@@ -123,6 +123,14 @@ class Job(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 
+class ClaudeUsage(SQLModel, table=True):
+    """Daily counter of REAL Anthropic calls — the global spend ceiling that caps
+    the worst-case Claude bill on the public service (see app/billing/claude_budget)."""
+    id: Optional[int] = Field(default=None, primary_key=True)
+    day: str = Field(index=True, unique=True)  # UTC YYYY-MM-DD
+    count: int = 0
+
+
 engine = create_engine(
     settings.database_url,
     echo=False,

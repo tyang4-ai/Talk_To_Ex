@@ -20,6 +20,8 @@ os.environ.setdefault("DEMO_MODE", "false")
 # Likewise shield from REQUIRE_SUBSCRIPTION=false (the free-for-all switch) so the
 # paywall tests exercise the real billing gate; free-mode is tested via monkeypatch.
 os.environ.setdefault("REQUIRE_SUBSCRIPTION", "true")
+# Don't let the global Claude-spend ceiling trip the suite.
+os.environ.setdefault("MAX_CLAUDE_CALLS_PER_DAY", "100000")
 
 
 # --- Binary parser fixtures ---------------------------------------------------

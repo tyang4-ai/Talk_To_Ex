@@ -53,6 +53,16 @@ class Settings(BaseSettings):
     # SMS still run normally. Flip True (and wire Stripe) to start charging.
     require_subscription: bool = True
 
+    # AI spend guardrails for the PUBLIC service — the owner's hard backstop
+    # against a runaway Anthropic bill. A global daily ceiling across every real
+    # Claude call (distill + corrections + style re-tune), an instant off-switch,
+    # and per-user caps. (Set a spend limit in the Anthropic console too.)
+    max_claude_calls_per_day: int = 50
+    claude_kill_switch: bool = False
+    max_personas_per_user: int = 10
+    max_corrections_per_persona: int = 20
+    max_correction_chars: int = 500
+
     # Demo mode (spec: localhost dry-run) — bypass the paid externals (Claude
     # distillation, Stripe gate, Twilio number) with local fallbacks so the whole
     # wizard is clickable end-to-end with NO external accounts. OFF in production.

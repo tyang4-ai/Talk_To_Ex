@@ -145,6 +145,15 @@ def maybe_retune(
 
     recent_msgs = recent(session, conv, n=100)
 
+    # Respect the global Claude spend ceiling — skip the OPTIONAL style retune
+    # when the daily budget is spent rather than failing the live SMS reply.
+    injected = client is not None
+    if not injected and not settings.demo_mode:
+        from ..billing import claude_budget
+
+        if claude_budget.remaining(session) <= 0:
+            return None
+        claude_budget.consume(session)
     client = client or _make_anthropic_client()
     messages = _build_messages(original, recent_msgs, meta)
     overlay = _call_claude(client, messages)

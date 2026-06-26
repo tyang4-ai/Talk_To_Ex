@@ -22,7 +22,7 @@ from typing import List, Optional
 
 from ftfy import fix_text
 
-from .base import NormalizedMessage, NormalizedTranscript
+from .base import NormalizedMessage, NormalizedTranscript, reject_zip_bomb
 
 
 def _fix(value: Optional[str]) -> str:
@@ -40,6 +40,7 @@ def _iter_message_files(path: str) -> List[str]:
     if os.path.isfile(path) and zipfile.is_zipfile(path):
         tmp = tempfile.mkdtemp(prefix="ig_export_")
         with zipfile.ZipFile(path) as zf:
+            reject_zip_bomb(zf)
             zf.extractall(tmp)
         root = tmp
     elif os.path.isdir(path):

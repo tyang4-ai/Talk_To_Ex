@@ -12,6 +12,7 @@ from pydantic import BaseModel
 from sqlmodel import Session, select
 
 from ..auth.deps import get_current_user
+from ..billing import claude_budget
 from ..billing.number_service import provision
 from ..config import settings
 from ..convo.engine import reply as engine_reply
@@ -115,6 +116,12 @@ def create_persona(
     user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> PersonaSummary:
+    owned = session.exec(select(Persona.id).where(Persona.user_id == user.id)).all()
+    if len(owned) >= settings.max_personas_per_user:
+        raise HTTPException(
+            status.HTTP_429_TOO_MANY_REQUESTS,
+            f"Persona limit reached ({settings.max_personas_per_user} per account).",
+        )
     meta: dict[str, Any] = {"intake": body.intake}
     if body.peer_e164:
         meta["peer_e164"] = body.peer_e164
@@ -152,10 +159,25 @@ def get_persona(
 @router.post("/{persona_id}/distill")
 def distill_persona(
     persona_id: int,
+    force: bool = False,
     user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> dict:
     persona = _owned(session, user, persona_id)
+
+    # Idempotency: a persona that's already been built does NOT re-spend on Claude
+    # unless the owner explicitly forces it (?force=true). Blocks re-distill loops.
+    if persona.persona_md_enc and not force:
+        meta = json.loads(persona.meta_json or "{}")
+        return {
+            "ok": True,
+            "name": persona.name,
+            "already_distilled": True,
+            "llm_language": meta.get("llm_language"),
+            "llm_model": meta.get("llm_model"),
+            "llm_model_source": meta.get("llm_model_source"),
+        }
+
     uploads = session.exec(select(Upload).where(Upload.persona_id == persona_id)).all()
     if not uploads:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "no uploads to distill")
@@ -168,6 +190,8 @@ def distill_persona(
     intake = persona_meta.get("intake", {})
     override = persona_meta.get("llm_model_override")
 
+    if not settings.demo_mode:
+        claude_budget.consume(session)  # reserve a Claude call or 503 (global ceiling)
     arts = distill(transcript, intake)  # real Claude call at runtime (needs key)
     arts.meta["intake"] = intake  # keep intake so re-distill stays possible
 
@@ -352,8 +376,23 @@ def correct_persona(
     user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> dict:
-    _owned(session, user, persona_id)
-    store.apply_correction(persona_id, body.instruction, session)  # Claude at runtime
+    persona = _owned(session, user, persona_id)
+    instruction = (body.instruction or "").strip()
+    if not instruction:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "empty correction")
+    if len(instruction) > settings.max_correction_chars:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            f"correction too long (max {settings.max_correction_chars} characters)",
+        )
+    meta = json.loads(persona.meta_json or "{}")
+    if int(meta.get("corrections_count", 0)) >= settings.max_corrections_per_persona:
+        raise HTTPException(
+            status.HTTP_429_TOO_MANY_REQUESTS, "correction limit reached for this persona"
+        )
+    if not settings.demo_mode:
+        claude_budget.consume(session)  # reserve a Claude call or 503 (global ceiling)
+    store.apply_correction(persona_id, instruction, session)  # Claude at runtime
     return {"ok": True}
 
 

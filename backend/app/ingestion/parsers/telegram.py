@@ -29,7 +29,7 @@ from typing import List, Optional
 from dateutil import parser as dateparser
 from ftfy import fix_text
 
-from .base import NormalizedMessage, NormalizedTranscript
+from .base import NormalizedMessage, NormalizedTranscript, reject_zip_bomb
 
 
 def _fix(value: Optional[str]) -> str:
@@ -46,6 +46,7 @@ def _iter_export_files(path: str) -> List[str]:
     if os.path.isfile(path) and zipfile.is_zipfile(path):
         tmp = tempfile.mkdtemp(prefix="tg_export_")
         with zipfile.ZipFile(path) as zf:
+            reject_zip_bomb(zf)
             zf.extractall(tmp)
         root = tmp
     elif os.path.isdir(path):
