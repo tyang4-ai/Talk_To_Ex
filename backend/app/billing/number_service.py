@@ -49,7 +49,10 @@ def provision(
     otherwise.
     """
     owner = session.get(User, persona.user_id)
-    if not settings.demo_mode and (owner is None or owner.subscription_status != "active"):
+    # Gate on a real subscription only when billing is actually on (not demo, and
+    # the free-for-all switch is off). Free mode assigns the number for everyone.
+    billing_on = not settings.demo_mode and settings.require_subscription
+    if billing_on and (owner is None or owner.subscription_status != "active"):
         raise SubscriptionRequired()
 
     if auto_buy_tollfree:
