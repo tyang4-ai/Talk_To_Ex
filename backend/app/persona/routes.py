@@ -217,15 +217,28 @@ def _build_and_reveal(persona_id: int, job_id: int) -> None:
         except Exception:  # noqa: BLE001 — a failed reveal must not crash the worker
             log.exception("reveal failed for persona %s", persona_id)
 
+        # Chain the (long, GPU) fine-tune that hot-upgrades the voice later. It's
+        # left QUEUED for the out-of-process worker (python -m app.jobs.run_worker),
+        # never tied to the web process. Failure is non-fatal: the persona keeps
+        # texting on its prompt-only distilled voice (meta["llm_model"]).
+        if settings.finetune_enabled:
+            try:
+                queue.enqueue(session, persona_id, kind="finetune")
+                log.info("queued fine-tune for persona %s", persona_id)
+            except Exception:  # noqa: BLE001
+                log.exception("could not enqueue finetune for persona %s", persona_id)
+
 
 def _build_state(persona: Persona, job: Optional[Job]) -> str:
-    """Friendly status for the dashboard/poller."""
+    """Friendly status for the dashboard/poller. Once the persona is revealed
+    (active), a background fine-tune does NOT drag it back to 'contemplating' —
+    the voice upgrade is silent, so 'revealed' wins over an in-flight finetune."""
+    if persona.status == "active":
+        return "revealed"               # they texted you (voice may still be upgrading)
     if job is not None and job.status in _BUILDING:
-        return "contemplating"          # "he's thinking about his wrongdoings…"
+        return "contemplating"          # "they're contemplating their wrongdoings…"
     if job is not None and job.status == "failed":
         return "failed"
-    if persona.status == "active":
-        return "revealed"               # he texted you
     if persona.persona_md_enc:
         return "ready"                  # built, opener not (yet) sent
     return "draft"                      # nothing built yet
@@ -238,6 +251,7 @@ class BuildOut(BaseModel):
     job_id: Optional[int] = None
     job_status: Optional[str] = None
     revealed: bool = False
+    learning: bool = False              # background fine-tune still upgrading the voice
     has_phone: bool = False
     number_e164: Optional[str] = None   # the number the ex texts them FROM
     error: Optional[str] = None
@@ -257,6 +271,12 @@ def _build_payload(session: Session, persona: Persona) -> BuildOut:
         job_id=job.id if job else None,
         job_status=job.status if job else None,
         revealed=persona.status == "active",
+        learning=(
+            persona.status == "active"
+            and job is not None
+            and job.kind == "finetune"
+            and job.status in _BUILDING
+        ),
         has_phone=bool(meta.get("peer_e164") or (owner and owner.phone_e164)),
         number_e164=number.e164 if number else None,
         error=job.error if (job and job.status == "failed") else None,

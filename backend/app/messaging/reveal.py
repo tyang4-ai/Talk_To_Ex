@@ -74,10 +74,13 @@ def go_live(session: Session, persona_id: int, sender: Optional[object] = None) 
 
 
 def on_finetune_ready(session: Session, job: Job, sender: Optional[object] = None) -> bool:
-    """Worker hook: when a finetune job reaches ``ready``, take the persona live.
-
-    The out-of-process worker loop calls this after ``worker.run_once`` returns a
-    ready finetune job."""
+    """Worker hook for a READY fine-tune job. In the chained build the persona was
+    ALREADY revealed right after distillation (the ex texted first on the prompt-only
+    voice); the fine-tune is a SILENT voice upgrade the live engine picks up via
+    ``meta["adapter_model"]``. So this NO LONGER sends an opener — doing so would
+    text the friend a second time. It only records the upgrade and returns False
+    (nothing sent). ``sender`` is accepted for signature stability."""
     if job.kind != "finetune" or job.status != "ready":
         return False
-    return go_live(session, job.persona_id, sender=sender)
+    log.info("persona %s fine-tune ready — voice upgraded silently (no opener)", job.persona_id)
+    return False
