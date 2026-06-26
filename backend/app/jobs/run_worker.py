@@ -35,9 +35,16 @@ def _register_handlers() -> None:
     register_build_handler()  # "build" = distillation (no GPU)
     if settings.finetune_enabled:
         try:
-            from ..finetune.pipeline import register_handler
+            if settings.finetune_backend == "wave":
+                from ..finetune.wave_runner import wave_handler
 
-            register_handler()  # "finetune" = QLoRA (host-only runners)
+                worker.register("finetune", wave_handler)  # SLURM QLoRA on WAVE → atlas
+                log.info("finetune backend: WAVE")
+            else:
+                from ..finetune.pipeline import register_handler
+
+                register_handler()  # host-only default (degrades cleanly)
+                log.info("finetune backend: %s (host-only)", settings.finetune_backend)
         except Exception as exc:  # noqa: BLE001 — never block the loop on this
             log.warning("finetune handler not registered: %s", exc)
 

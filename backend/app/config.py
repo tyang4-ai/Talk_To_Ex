@@ -43,13 +43,17 @@ class Settings(BaseSettings):
     finetune_enabled: bool = True
     finetune_trainer: str = "unsloth"  # unsloth | llama-factory (host-only)
     train_ollama_host: str = "http://localhost:11434"  # where derived models are created (the 4090)
-    # Real QLoRA runners are heavy + host-only; only the 4090 worker flips this True
-    # (CI + the web process keep the safe raising defaults).
-    finetune_real_runners: bool = False
-    train_hf_token: str = ""            # HF token for gated bases (google/gemma-3-12b-it)
-    # Serve topology: train on the 4090, ship the GGUF to atlas + `ollama create` there.
-    atlas_ssh: str = ""                 # user@host of the atlas serving box (e.g. tya@100.73.71.126)
-    atlas_adapters_dir: str = "~/talk-to-ex-adapters"  # where GGUFs land on atlas before create
+    # How the fine-tune actually runs: "wave" = orchestrate a SLURM QLoRA on SCU
+    # WAVE HPC (the real path); "off" = the chain enqueues but the job degrades
+    # host-only (CI/web default). The worker on the user's box sets this to "wave".
+    finetune_backend: str = "off"      # wave | off
+    finetune_epochs: int = 2
+    train_hf_token: str = ""           # HF token for gated bases (google/gemma-3-12b-it)
+    # SSH aliases (the worker runs AS THE USER, so ~/.ssh/config resolves these).
+    wave_ssh_alias: str = "wave"       # WAVE login node (needs the SCU VPN up)
+    atlas_ssh_alias: str = "atlas"     # atlas serving box (Ollama), over Tailscale
+    wave_tlx_dir: str = "~/tlx"        # talk-to-ex root on WAVE HOME (compute-readable)
+    atlas_adapters_dir: str = "~/tlx-adapters"  # where GGUFs land on atlas before `ollama create`
 
     # Freemium metering (spec §25): N free inbound messages per persona, then the
     # owner must have an active subscription to keep getting replies.
