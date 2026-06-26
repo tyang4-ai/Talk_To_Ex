@@ -22,12 +22,14 @@ import {
 
 const STATUS_LABEL: Record<PersonaStatus, string> = {
   draft: "Draft — not live yet",
+  building: "💭 Contemplating their wrongdoings…",
   active: "Active — they're answering",
   dormant: "Dormant — replies paused",
 };
 
 const STATUS_DOT: Record<PersonaStatus, string> = {
   draft: "bg-warning",
+  building: "bg-rausch animate-pulse",
   active: "bg-success",
   dormant: "bg-muted",
 };
@@ -83,6 +85,16 @@ export default function Dashboard() {
       .catch((err) => setError(errorMessage(err, "Couldn't load your persona.")))
       .finally(() => setDetailLoading(false));
   }, [selectedId]);
+
+  // While a persona is still "contemplating", poll until it goes live (texts
+  // them) so the dashboard flips on its own — no refresh needed.
+  useEffect(() => {
+    if (persona?.status !== "building" || selectedId === null) return;
+    const timer = setInterval(() => {
+      api.getPersona(selectedId).then(setPersona).catch(() => {});
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [persona?.status, selectedId]);
 
   function selectPersona(id: number) {
     if (id === selectedId) return;

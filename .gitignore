@@ -32,3 +32,6 @@ nul
 
 # local agent/session state
 .claude/
+
+# windows-service install/restart transcripts
+ops/services/*.log

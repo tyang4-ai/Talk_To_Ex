@@ -239,6 +239,7 @@ class BuildOut(BaseModel):
     job_status: Optional[str] = None
     revealed: bool = False
     has_phone: bool = False
+    number_e164: Optional[str] = None   # the number the ex texts them FROM
     error: Optional[str] = None
 
 
@@ -246,6 +247,9 @@ def _build_payload(session: Session, persona: Persona) -> BuildOut:
     job = _latest_build_job(session, persona.id)
     owner = session.get(User, persona.user_id)
     meta = json.loads(persona.meta_json or "{}")
+    number = session.exec(
+        select(Number).where(Number.persona_id == persona.id)
+    ).first()
     return BuildOut(
         persona_id=persona.id,
         name=persona.name,
@@ -254,6 +258,7 @@ def _build_payload(session: Session, persona: Persona) -> BuildOut:
         job_status=job.status if job else None,
         revealed=persona.status == "active",
         has_phone=bool(meta.get("peer_e164") or (owner and owner.phone_e164)),
+        number_e164=number.e164 if number else None,
         error=job.error if (job and job.status == "failed") else None,
     )
 
@@ -273,6 +278,10 @@ def build_persona(
     if not session.exec(select(Upload).where(Upload.persona_id == persona_id)).first():
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "upload a chat export first")
 
+    # Already built or revealed, or a build already in flight → return current state
+    # rather than re-spending on Claude. (The poller calls this on every visit.)
+    if persona.persona_md_enc or persona.status == "active":
+        return _build_payload(session, persona)
     existing = _latest_build_job(session, persona_id)
     if existing is not None and existing.status in _BUILDING:
         return _build_payload(session, persona)  # already brewing — don't double-spend

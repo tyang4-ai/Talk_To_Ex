@@ -69,7 +69,21 @@ export function errorMessage(err: unknown, fallback = "Something went wrong."): 
 // ───────────────────────── Types (the E6 contract) ─────────────────────────
 
 export type SubscriptionStatus = "inactive" | "active" | "past_due" | "canceled";
-export type PersonaStatus = "draft" | "active" | "dormant";
+export type PersonaStatus = "draft" | "building" | "active" | "dormant";
+
+/** The async build/reveal state machine (GET/POST /personas/{id}/status|build). */
+export type BuildState = "draft" | "contemplating" | "ready" | "revealed" | "failed";
+export interface BuildStatus {
+  persona_id: number;
+  name: string;
+  state: BuildState;
+  job_id: number | null;
+  job_status: string | null;
+  revealed: boolean;
+  has_phone: boolean;
+  number_e164: string | null;
+  error: string | null;
+}
 
 /** Backend returns access_token (+ flat user fields); we expose it as `token`. */
 export interface AuthResponse {
@@ -245,6 +259,17 @@ export const api = {
   },
   async distill(id: number): Promise<PersonaDetail> {
     const { data } = await http.post<PersonaDetail>(`/personas/${id}/distill`, {});
+    return data;
+  },
+  /** Kick off the async build (set up & forget). Returns immediately; the ex texts
+   *  the user first when it finishes. See pollStatus / status. */
+  async build(id: number): Promise<BuildStatus> {
+    const { data } = await http.post<BuildStatus>(`/personas/${id}/build`, {});
+    return data;
+  },
+  /** Poll the build/reveal state — drives the "he's contemplating…" screen. */
+  async status(id: number): Promise<BuildStatus> {
+    const { data } = await http.get<BuildStatus>(`/personas/${id}/status`);
     return data;
   },
   async activate(id: number): Promise<ActivateResponse> {
