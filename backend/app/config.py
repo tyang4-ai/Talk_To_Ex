@@ -57,7 +57,7 @@ class Settings(BaseSettings):
 
     # Freemium metering (spec §25): N free inbound messages per persona, then the
     # owner must have an active subscription to keep getting replies.
-    free_message_limit: int = 200
+    free_message_limit: int = 100
 
     # Master billing switch. When False the paywall is disabled entirely (free for
     # everyone) — independent of demo_mode, so live Claude distillation and Twilio
