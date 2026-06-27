@@ -5,4 +5,6 @@ REM WAVE (training) + atlas (serving). Launched by the TalkToExWorker scheduled
 REM task at logon. Reads backend/.env (FINETUNE_BACKEND=wave).
 cd /d "B:\Coding\Talk To Ex\backend"
 if not exist "..\logs" mkdir "..\logs"
-".venv\Scripts\python.exe" -m app.jobs.run_worker >> "..\logs\worker.log" 2>&1
+REM Python's FileHandler owns worker.log; redirect raw stdout/stderr (startup
+REM errors) to a SEPARATE file to avoid a double-open lock on worker.log.
+".venv\Scripts\python.exe" -m app.jobs.run_worker >> "..\logs\worker.console.log" 2>&1
