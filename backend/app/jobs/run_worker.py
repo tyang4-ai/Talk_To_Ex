@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import logging
 import time
+from pathlib import Path
 
 from sqlmodel import Session
 
@@ -68,9 +69,17 @@ def run_forever(poll_seconds: float = 5.0) -> None:
 
 
 def main() -> None:
+    # Log to a file (not just stdout) so the worker can run windowless (pythonw)
+    # with nothing for the user to accidentally close.
+    log_dir = Path(__file__).resolve().parents[3] / "logs"
+    log_dir.mkdir(exist_ok=True)
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+        handlers=[
+            logging.FileHandler(log_dir / "worker.log", encoding="utf-8"),
+            logging.StreamHandler(),
+        ],
     )
     run_forever()
 
