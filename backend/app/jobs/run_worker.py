@@ -50,10 +50,31 @@ def _register_handlers() -> None:
             log.warning("finetune handler not registered: %s", exc)
 
 
+def _ssh_selfcheck() -> None:
+    """Log whether the worker can SSH to WAVE + atlas from its current context.
+    Critical when run as a SYSTEM service (vs the logged-in user) — confirms the
+    SSH keys resolve. Non-fatal; just diagnostics in the log."""
+    import subprocess
+
+    for alias in (settings.wave_ssh_alias, settings.atlas_ssh_alias):
+        try:
+            r = subprocess.run(
+                ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=8", alias, "echo ok"],
+                capture_output=True, text=True, timeout=20,
+            )
+            if r.returncode == 0 and "ok" in r.stdout:
+                log.info("ssh %s: OK", alias)
+            else:
+                log.warning("ssh %s: FAIL rc=%s %s", alias, r.returncode, (r.stderr or "").strip()[:160])
+        except Exception as exc:  # noqa: BLE001
+            log.warning("ssh %s: error %s", alias, exc)
+
+
 def run_forever(poll_seconds: float = 5.0) -> None:
     """Drain the queue forever, sleeping when idle. Ctrl-C exits cleanly."""
     init_db()
     _register_handlers()
+    _ssh_selfcheck()
     log.info("worker loop started (poll=%.1fs, kinds=%s)", poll_seconds, list(worker.DISPATCH))
     try:
         while True:
