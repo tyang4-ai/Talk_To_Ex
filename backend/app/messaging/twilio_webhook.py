@@ -102,16 +102,18 @@ def _respond(persona_id: int, peer_e164: str, our_number: str, body: str) -> Non
         with Session(db_engine) as session:
             conv = engine.get_or_create_conversation(session, persona_id, peer_e164)
 
-            # 0) Freemium gate (spec §25): past the free allowance and no active
-            # subscription → send the paywall instead of a persona reply. Crisis
-            # safety already ran in the webhook, so it is never short-circuited.
-            if metering.should_paywall(session, persona_id):
-                sender.send_bubbles(
-                    to=peer_e164,
-                    from_=our_number,
-                    bubbles=[metering.paywall_message()],
-                )
-                history.append(session, conv, "in", body)  # count it; no reply
+            # 0) Freemium hard cap (spec §25): past the free allowance and not on a
+            # paid plan → tell her ONCE, then stay quiet. Applies even in free-for-all
+            # mode. Crisis safety already ran in the webhook, so it is never skipped.
+            if metering.friend_capped(session, persona_id):
+                if not metering.cap_already_notified(session, persona_id):
+                    sender.send_bubbles(
+                        to=peer_e164,
+                        from_=our_number,
+                        bubbles=[metering.limit_message()],
+                    )
+                    metering.mark_cap_notified(session, persona_id)
+                history.append(session, conv, "in", body)  # count it; no persona reply
                 return
 
             # 1) Generate the reply from prior context + this (unpersisted) turn.

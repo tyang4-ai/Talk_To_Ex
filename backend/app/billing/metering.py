@@ -11,6 +11,8 @@ gateway, after the deterministic crisis tripwire (which always runs first).
 """
 from __future__ import annotations
 
+import json
+
 from sqlalchemy import func
 from sqlmodel import Session, select
 
@@ -20,6 +22,13 @@ from ..db import Conversation, Message, Persona, User
 PAYWALL_MESSAGE = (
     "You've used up your free messages 💔 "
     "Subscribe to keep texting: {url}"
+)
+
+# Sent ONCE when the friend hits the free message cap (free mode has no Stripe, so
+# this is a plain "you're done" notice rather than a subscribe pitch).
+LIMIT_MESSAGE = (
+    "💔 that's all the free messages for now — hope it gave you a little closure. "
+    "(thanks for using Ex.Change.)"
 )
 
 
@@ -63,3 +72,42 @@ def should_paywall(session: Session, persona_id: int) -> bool:
 def paywall_message() -> str:
     """The templated paywall SMS, with the portal/checkout link filled in."""
     return PAYWALL_MESSAGE.format(url=settings.app_url)
+
+
+# --- per-friend hard cap (applies even in free-for-all mode) ----------------
+# Distinct from should_paywall: this is a flat per-friend ceiling that fires even
+# when require_subscription is off (free mode). A paid subscription still lifts it.
+
+def friend_capped(session: Session, persona_id: int) -> bool:
+    """True once the friend has used the free allowance and the owner is not on a
+    paid plan — enforced regardless of the free-for-all switch."""
+    if not over_free_limit(session, persona_id):
+        return False
+    persona = session.get(Persona, persona_id)
+    user = session.get(User, persona.user_id) if persona else None
+    return not (user and user.subscription_status == "active")
+
+
+def cap_already_notified(session: Session, persona_id: int) -> bool:
+    """Whether the one-time 'limit reached' notice has already gone out."""
+    persona = session.get(Persona, persona_id)
+    if persona is None:
+        return True
+    meta = json.loads(persona.meta_json or "{}")
+    return bool(meta.get("cap_notified"))
+
+
+def mark_cap_notified(session: Session, persona_id: int) -> None:
+    """Record that the friend has been told they hit the cap (so we tell once)."""
+    persona = session.get(Persona, persona_id)
+    if persona is None:
+        return
+    meta = json.loads(persona.meta_json or "{}")
+    meta["cap_notified"] = True
+    persona.meta_json = json.dumps(meta, ensure_ascii=False)
+    session.add(persona)
+    session.commit()
+
+
+def limit_message() -> str:
+    return LIMIT_MESSAGE

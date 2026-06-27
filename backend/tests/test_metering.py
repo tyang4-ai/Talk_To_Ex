@@ -109,24 +109,40 @@ def test_free_mode_disables_paywall(db_engine, seed, monkeypatch):
         assert metering.should_paywall(s, seed) is False
 
 
+# --- per-friend hard cap (applies in free mode too) ------------------------
+def test_friend_capped_applies_in_free_mode(db_engine, seed, monkeypatch):
+    _seed_inbound(db_engine, seed, 9)  # past the limit, inactive sub
+    monkeypatch.setattr(settings, "require_subscription", False)  # free-for-all
+    with Session(db_engine) as s:
+        assert metering.should_paywall(s, seed) is False     # subscription paywall off
+        assert metering.friend_capped(s, seed) is True       # hard cap still applies
+    _activate(db_engine, seed)
+    with Session(db_engine) as s:
+        assert metering.friend_capped(s, seed) is False      # a paid plan lifts it
+
+
 # --- gate in _respond ------------------------------------------------------
-def test_respond_paywalls_over_limit(db_engine, seed, monkeypatch):
+def test_respond_caps_over_limit_and_notifies_once(db_engine, seed, monkeypatch):
     _seed_inbound(db_engine, seed, 2)  # at the free limit, inactive
     rec = RecordingSender()
     monkeypatch.setattr(twilio_webhook, "sender", rec)
     monkeypatch.setattr(
         twilio_webhook.engine, "reply",
-        lambda *a, **k: pytest.fail("engine must not run past the paywall"),
+        lambda *a, **k: pytest.fail("engine must not run past the cap"),
     )
 
     twilio_webhook._respond(seed, PEER, OUR, "let me back in")
-
     assert len(rec.calls) == 1
-    msg = rec.calls[0]["bubbles"][0]
-    assert "Subscribe" in msg and "https://ex.example/plan" in msg
-    # the inbound was still counted
+    assert "closure" in rec.calls[0]["bubbles"][0].lower()    # the limit notice
     with Session(db_engine) as s:
         assert metering.inbound_count(s, seed) == 3
+        assert metering.cap_already_notified(s, seed) is True
+
+    # a SECOND text past the cap is silent — the notice only goes out once
+    twilio_webhook._respond(seed, PEER, OUR, "you there?")
+    assert len(rec.calls) == 1
+    with Session(db_engine) as s:
+        assert metering.inbound_count(s, seed) == 4
 
 
 def test_respond_replies_when_active(db_engine, seed, monkeypatch):
